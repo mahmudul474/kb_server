@@ -21,6 +21,10 @@ const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.fieldname === "mainImage") {
       cb(null, "uploads/main-images/");
+    }else if (file.fieldname === "userPhoto") {
+      cb(null, "uploads/user-photos/");
+    } else if (file.fieldname === "nidCardImg") {
+      cb(null, "uploads/nid-card-images/");
     } else if (file.fieldname === "subImages") {
       cb(null, "uploads/sub-images/");
     } else if (file.fieldname === "pdfFile") {
@@ -55,6 +59,7 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const userCollection = client.db("KB").collection("users");
+    const productCollection = client.db("KB").collection("products");
 
     //register
     app.post(
@@ -125,6 +130,7 @@ async function run() {
       }
     });
 
+    ///upload   product
     app.post(
       "/products",
       upload.fields([
@@ -136,6 +142,7 @@ async function run() {
         // Process the form data and handle product upload
 
         // Access the form data
+        const owner = req.body.owner;
         const name = req.body.name;
         const description = req.body.description;
         const startBiddingPrice = req.body.startBiddingPrice;
@@ -152,6 +159,7 @@ async function run() {
         // Save the product data to MongoDB
         const product = {
           name,
+          owner,
           description,
           startBiddingPrice,
           buyNowPrice,
@@ -163,8 +171,7 @@ async function run() {
           pdfFile: pdfFile.filename
         };
 
-        const collection = client.db("KB").collection("products");
-        collection.insertOne(product, (err, result) => {
+        productCollection.insertOne(product, (err, result) => {
           if (err) {
             console.error("Error saving product to MongoDB:", err);
             res
@@ -180,6 +187,18 @@ async function run() {
         });
       }
     );
+    // get all  product
+
+    app.get("/products", async (req, res) => {
+      const result = await productCollection.find({}).toArray();
+      res.send(result);
+    });
+
+
+
+
+
+
   } finally {
     // Ensures that the client will close when you finish/error
   }
