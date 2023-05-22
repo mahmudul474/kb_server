@@ -2,26 +2,21 @@ const   express = require('express')
 const app = express()
 const cors=require("cors")
 const port = process.env.PORT || 5000
-const { MongoClient, ServerApiVersion } = require('mongodb');
-const multer = require('multer');
-const path = require('path');
-const bcrypt = require('bcrypt');
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const multer = require("multer");
+const path = require("path");
+const bcrypt = require("bcrypt");
 
-
-///midleWere 
-app.use(express.json())
-app.use(cors())
-
-
-
-
+///midleWere
+app.use(express.json());
+app.use(cors());
 
 // Multer storage configuration for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     if (file.fieldname === "mainImage") {
       cb(null, "uploads/main-images/");
-    }else if (file.fieldname === "userPhoto") {
+    } else if (file.fieldname === "userPhoto") {
       cb(null, "uploads/user-photos/");
     } else if (file.fieldname === "nidCardImg") {
       cb(null, "uploads/nid-card-images/");
@@ -101,7 +96,6 @@ async function run() {
         }
       }
     );
-
     //login
     app.post("/login", async (req, res) => {
       try {
@@ -129,7 +123,6 @@ async function run() {
         res.status(500).json({ message: "Login failed" });
       }
     });
-
     ///upload   product
     app.post(
       "/products",
@@ -188,17 +181,17 @@ async function run() {
       }
     );
     // get all  product
-
     app.get("/products", async (req, res) => {
       const result = await productCollection.find({}).toArray();
       res.send(result);
     });
-
-
-
-
-
-
+    //get singel product
+    app.get("/products/:id", async (req, res) => {
+      const productId = req.params.id;
+      const query = { _id: new ObjectId(productId) };
+      const result = await productCollection.findOne(query);
+      res.send(result);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
   }
