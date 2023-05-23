@@ -108,15 +108,6 @@ async function run() {
         if (!user) {
           return res.status(401).json({ message: "Invalid email or password" });
         }
-
-        // Compare the provided password with the stored password
-        // const passwordMatch = await bcrypt.compare(password, user.password);
-
-        // if (!passwordMatch) {
-        //   return res.status(401).json({ message: 'Invalid email or password' });
-        // }
-
-        // Authentication successful
         res.status(200).json({ message: "Login successful" });
       } catch (err) {
         console.error(err);
@@ -161,7 +152,8 @@ async function run() {
           endBiddingTime,
           mainImage: mainImage.filename,
           subImages: subImages.map(file => file.filename),
-          pdfFile: pdfFile.filename
+          pdfFile: pdfFile.filename,
+          bids: []
         };
 
         productCollection.insertOne(product, (err, result) => {
@@ -180,6 +172,15 @@ async function run() {
         });
       }
     );
+
+    ///get  singel user
+    app.get("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      res.send(user);
+    });
+
     // get all  product
     app.get("/products", async (req, res) => {
       const result = await productCollection.find({}).toArray();
@@ -192,6 +193,195 @@ async function run() {
       const result = await productCollection.findOne(query);
       res.send(result);
     });
+
+    app.post("/products/:productId/bids", async (req, res) => {
+      try {
+        const { productId } = req.params;
+        const { bidAmount, bidderName, bidderId } = req.body;
+
+        // Find the product by its ID in the database
+        const product = await productCollection.findOne({
+          _id: new ObjectId(productId)
+        });
+
+        if (!product) {
+          return res.status(404).json({ error: "Product not found" });
+        }
+
+        // Check if bidding is still open
+        const currentTime = new Date().getTime();
+        const biddingEndTime = new Date(product.endBiddingTime).getTime();
+        if (currentTime > biddingEndTime) {
+          return res.status(400).json({ error: "Bidding has ended" });
+        }
+
+        // Check if bid amount is greater than the current highest bid
+        const currentHighestBid = product.bids.reduce(
+          (maxBid, bid) => (bid.amount > maxBid ? bid.amount : maxBid),
+          0
+        );
+        if (bidAmount <= currentHighestBid) {
+          return res.status(400).json({ error: "Bid amount is too low" });
+        }
+
+        // Update the product with the new bid
+        const newBid = {
+          amount: bidAmount,
+          bidderName: bidderName,
+          bidderId: bidderId,
+          timestamp: new Date().toISOString()
+        };
+        product.bids.push(newBid);
+
+        await productCollection.updateOne(
+          { _id: new ObjectId(productId) },
+          { $set: product }
+        );
+
+        res
+          .status(201)
+          .json({ message: "Bid placed successfully", bid: newBid });
+      } catch (error) {
+        res.status(500).json({ error: "Error placing bid" });
+      }
+    });
+
+    ///get  winner
+    // app.get("/products/:productId/winner", async (req, res) => {
+    //   try {
+    //     const { productId } = req.params;
+
+    //     // Find the product by its ID in the database
+    //     const product = await productCollection.findOne({
+    //       _id: new ObjectId(productId)
+    //     });
+
+    //     if (!product) {
+    //       return res.status(404).json({ error: "Product not found" });
+    //     }
+
+    //     // Check if any bids exist for the product
+    //     if (product.bids.length === 0) {
+    //       return res
+    //         .status(400)
+    //         .json({ error: "No bids found for the product" });
+    //     }
+
+    //     // Find the bid with the highest amount
+    //     const highestBid = product.bids.reduce((maxBid, bid) =>
+    //       bid.amount > maxBid.amount ? bid : maxBid
+    //     );
+
+    //     res
+    //       .status(200)
+    //       .json({ winner: highestBid.bidder, amount: highestBid.amount });
+    //   } catch (error) {
+    //     res.status(500).json({ error: "Error retrieving winner" });
+    //   }
+    // });
+
+    // app.get("/products/:productId/winner", async (req, res) => {
+    //   try {
+    //     const { productId } = req.params;
+
+    //     // Find the product by its ID in the database
+    //     const product = await productCollection.findOne({
+    //       _id: new ObjectId(productId)
+    //     });
+
+    //     if (!product) {
+    //       return res.status(404).json({ error: "Product not found" });
+    //     }
+
+    //     // Check if the bidding time has ended
+    //     const currentTime = new Date();
+    //     const endBiddingTime = new Date(product.endBiddingTime);
+
+    //     if (currentTime < endBiddingTime) {
+    //       return res
+    //         .status(400)
+    //         .json({ error: "Bidding is still in progress" });
+    //     }
+
+    //     // Find the bid with the highest amount
+    //     const highestBid = await Bid.findOne({ productId }).sort({
+    //       amount: -1
+    //     });
+
+    //     if (!highestBid) {
+    //       return res
+    //         .status(400)
+    //         .json({ error: "No bids found for the product" });
+    //     }
+
+    //     // Get the winner's details
+    //     const winner = await User.findById(highestBid.bidder);
+
+    //     res.status(200).json({ winner, amount: highestBid.amount });
+    //   } catch (error) {
+    //     res.status(500).json({ error: "Error retrieving winner" });
+    //   }
+    // });
+
+    app.get("/products/:productId/winner", async (req, res) => {
+      try {
+        const { productId } = req.params;
+
+        // Find the product by its ID in the database
+        const product = await productCollection.findOne({
+          _id: new ObjectId(productId)
+        });
+
+        if (!product) {
+          return res.status(404).json({ error: "Product not found" });
+        }
+
+        // Check if any bids exist for the product
+        if (product.bids.length === 0) {
+          return res
+            .status(400)
+            .json({ error: "No bids found for the product" });
+        }
+
+        // Find the bid with the highest amount
+        const highestBid = product.bids.reduce((maxBid, bid) =>
+          bid.amount > maxBid.amount ? bid : maxBid
+        );
+
+        console.log(highestBid);
+
+        // Check if the current time is greater than the bidding end time
+        const currentTime = new Date().getTime();
+        const biddingEndTime = new Date(product.endBiddingTime).getTime();
+        console.log(currentTime, "current");
+        console.log(biddingEndTime, "end time is greater than the");
+
+        if (currentTime >= biddingEndTime) {
+          // Bidding has ended, return the winner
+          const winner = await userCollection.findOne({
+            _id: new ObjectId(highestBid.bidderId)
+          });
+
+          console.log(winner);
+
+          return res
+            .status(200)
+            .json({ winner: winner, amount: highestBid.amount });
+        }
+
+        // // Bidding is still ongoing, return a message indicating bidding is not closed yet
+        // res.status(200).json({ message: "Bidding is still ongoing" });
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving winner" });
+      }
+    });
+
+
+
+
+
+
+
   } finally {
     // Ensures that the client will close when you finish/error
   }
