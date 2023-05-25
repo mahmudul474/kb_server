@@ -55,6 +55,8 @@ async function run() {
   try {
     const userCollection = client.db("KB").collection("users");
     const productCollection = client.db("KB").collection("products");
+    const biddCollection = client.db("KB").collection("bidders");
+
 
     //register
     app.post(
@@ -203,7 +205,8 @@ async function run() {
           bidderId,
           bidderEmail,
           bidderNumber,
-          bidderPhoto
+          bidderPhoto,
+          productName
         } = req.body;
 
         // Find the product by its ID in the database
@@ -248,6 +251,7 @@ async function run() {
           bidderEmail,
           bidderNumber,
           bidderPhoto,
+          productName,
           timestamp: new Date().toISOString()
         };
 
@@ -266,25 +270,27 @@ async function run() {
       }
     });
 
-    // app.get("/products/:productId/bids", async (req, res) => {
-    //   try {
-    //     const { productId } = req.params;
+    //  app.get("/products/:productId/bids", async (req, res) => {
+    //    try {
+    //      const { productId } = req.params;
 
-    //     // Find the product by its ID in the database
-    //     const product = await productCollection.findOne({
-    //       _id: new ObjectId(productId)
-    //     });
+    //      // Find the product by its ID in the database
+    //      const product = await productCollection.findOne({
+    //        _id: new ObjectId(productId)
+    //      });
 
-    //     if (!product) {
-    //       return res.status(404).json({ error: "Product not found" });
-    //     }
+    //      if (!product) {
+    //        return res.status(404).json({ error: "Product not found" });
+    //      }
 
-    //     res.status(200).json({ bids: product.bids });
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving bids" });
-    //   }
-    // });
+    //      res.status(200).json({ bids: product.bids });
+    //    } catch (error) {
+    //      res.status(500).json({ error: "Error retrieving bids" });
+    //    }
+    //  });
 
+
+    //winner 
     app.get("/products/:productId/winner", async (req, res) => {
       try {
         const { productId } = req.params;
@@ -310,19 +316,13 @@ async function run() {
           bid.amount > maxBid.amount ? bid : maxBid
         );
 
-        console.log(highestBid);
-
         // Check if the current time is greater than the bidding end time
         const currentTime = new Date().getTime();
         const biddingEndTime = new Date(product.endBiddingTime).getTime();
 
         if (currentTime >= biddingEndTime) {
           // Bidding has ended, return the winner
-          const winner = await userCollection.findOne({
-            _id: new ObjectId(highestBid.bidderId)
-          });
-
-          console.log(winner);
+          const winner = highestBid;
 
           return res
             .status(200)
