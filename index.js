@@ -55,7 +55,7 @@ async function run() {
   try {
     const userCollection = client.db("KB").collection("users");
     const productCollection = client.db("KB").collection("products");
-    const biddCollection = client.db("KB").collection("bidders");
+
 
 
     //register
@@ -206,7 +206,8 @@ async function run() {
           bidderEmail,
           bidderNumber,
           bidderPhoto,
-          productName
+          productName,
+          productPhoto
         } = req.body;
 
         // Find the product by its ID in the database
@@ -252,6 +253,7 @@ async function run() {
           bidderNumber,
           bidderPhoto,
           productName,
+          productPhoto,
           timestamp: new Date().toISOString()
         };
 
@@ -291,6 +293,9 @@ async function run() {
 
 
     //winner 
+    
+    
+    //get winner 
     app.get("/products/:productId/winner", async (req, res) => {
       try {
         const { productId } = req.params;
@@ -335,6 +340,98 @@ async function run() {
         res.status(500).json({ error: "Error retrieving winner" });
       }
     });
+
+
+  //get my all bids 
+
+  app.get("/bids/bidder/:bidderId/products", async (req, res) => {
+    try {
+      const { bidderId } = req.params;
+  
+      // Find all products that have bids from the bidder
+      const products = await productCollection.find({
+        "bids.bidderId": bidderId
+      }).toArray();
+  
+      res.status(200).json({ products });
+    } catch (error) {
+      res.status(500).json({ error: "Error retrieving bidder's products" });
+    }
+  });
+
+
+  ///get my  win bids 
+  // app.get("/bids/winners/:bidderId", async (req, res) => {
+  //   try {
+  //     const { bidderId } = req.params;
+  
+  //     // Find all products where the bidder has placed a bid
+  //     const products = await productCollection.find({ "bids.bidderId": bidderId }).toArray();
+  
+  //     // Collect the winning bids made by the bidder
+  //     const winnerBids = [];
+  //     products.forEach(product => {
+  //       const highestBid = product.bids.reduce((maxBid, bid) => (bid.amount > maxBid.amount ? bid : maxBid));
+  //       if (highestBid.bidderId === bidderId) {
+  //         winnerBids.push(highestBid);
+  //       }
+  //     });
+  
+  //     res.status(200).json({ bids: winnerBids });
+  //   } catch (error) {
+  //     res.status(500).json({ error: "Error retrieving winner bids" });
+  //   }
+  // });
+  
+  
+  app.get("/bids/bidder/:bidderId/products/won", async (req, res) => {
+    try {
+      const { bidderId } = req.params;
+  
+      // Find all products where the bidder has the highest bid
+      const products = await productCollection.aggregate([
+        {
+          $match: {
+            "bids.bidderId": bidderId
+          }
+        },
+        {
+          $unwind: "$bids"
+        },
+        {
+          $sort: {
+            "bids.amount": -1
+          }
+        },
+        {
+          $group: {
+            _id: "$_id",
+            product: { $first: "$$ROOT" },
+            highestBid: { $first: "$bids" }
+          }
+        },
+        {
+          $project: {
+            _id: "$product._id",
+            name: "$product.name",
+            description: "$product.description",
+            // Add other product fields you want to retrieve
+            highestBid: "$highestBid"
+          }
+        }
+      ]).toArray();
+  
+      res.status(200).json({ wonProducts: products });
+    } catch (error) {
+      res.status(500).json({ error: "Error retrieving won products" });
+    }
+  });
+
+
+
+
+
+
   } finally {
     // Ensures that the client will close when you finish/error
   }
