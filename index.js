@@ -1,7 +1,7 @@
-const   express = require('express')
-const app = express()
-const cors=require("cors")
-const port = process.env.PORT || 5000
+const express = require("express");
+const app = express();
+const cors = require("cors");
+const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const multer = require("multer");
 const path = require("path");
@@ -193,11 +193,18 @@ async function run() {
       const result = await productCollection.findOne(query);
       res.send(result);
     });
-
+    ///place bid
     app.post("/products/:productId/bids", async (req, res) => {
       try {
         const { productId } = req.params;
-        const { bidAmount, bidderName, bidderId } = req.body;
+        const {
+          bidAmount,
+          bidderName,
+          bidderId,
+          bidderEmail,
+          bidderNumber,
+          bidderPhoto
+        } = req.body;
 
         // Find the product by its ID in the database
         const product = await productCollection.findOne({
@@ -220,8 +227,17 @@ async function run() {
           (maxBid, bid) => (bid.amount > maxBid ? bid.amount : maxBid),
           0
         );
-        if (bidAmount <= currentHighestBid) {
-          return res.status(400).json({ error: "Bid amount is too low" });
+
+        // Calculate the minimum bid amount
+        const minimumBid = parseFloat(product.minimumBid);
+        console.log(currentHighestBid + minimumBid);
+
+        // Check if new bid amount is lower than current bid price plus minimum bid
+        if (bidAmount < currentHighestBid + minimumBid) {
+          return res.status(400).json({
+            error:
+              "New price cannot be lower than the current bid price plus the minimum bid amount."
+          });
         }
 
         // Update the product with the new bid
@@ -229,8 +245,12 @@ async function run() {
           amount: bidAmount,
           bidderName: bidderName,
           bidderId: bidderId,
+          bidderEmail,
+          bidderNumber,
+          bidderPhoto,
           timestamp: new Date().toISOString()
         };
+
         product.bids.push(newBid);
 
         await productCollection.updateOne(
@@ -246,8 +266,7 @@ async function run() {
       }
     });
 
-    ///get  winner
-    // app.get("/products/:productId/winner", async (req, res) => {
+    // app.get("/products/:productId/bids", async (req, res) => {
     //   try {
     //     const { productId } = req.params;
 
@@ -260,66 +279,9 @@ async function run() {
     //       return res.status(404).json({ error: "Product not found" });
     //     }
 
-    //     // Check if any bids exist for the product
-    //     if (product.bids.length === 0) {
-    //       return res
-    //         .status(400)
-    //         .json({ error: "No bids found for the product" });
-    //     }
-
-    //     // Find the bid with the highest amount
-    //     const highestBid = product.bids.reduce((maxBid, bid) =>
-    //       bid.amount > maxBid.amount ? bid : maxBid
-    //     );
-
-    //     res
-    //       .status(200)
-    //       .json({ winner: highestBid.bidder, amount: highestBid.amount });
+    //     res.status(200).json({ bids: product.bids });
     //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving winner" });
-    //   }
-    // });
-
-    // app.get("/products/:productId/winner", async (req, res) => {
-    //   try {
-    //     const { productId } = req.params;
-
-    //     // Find the product by its ID in the database
-    //     const product = await productCollection.findOne({
-    //       _id: new ObjectId(productId)
-    //     });
-
-    //     if (!product) {
-    //       return res.status(404).json({ error: "Product not found" });
-    //     }
-
-    //     // Check if the bidding time has ended
-    //     const currentTime = new Date();
-    //     const endBiddingTime = new Date(product.endBiddingTime);
-
-    //     if (currentTime < endBiddingTime) {
-    //       return res
-    //         .status(400)
-    //         .json({ error: "Bidding is still in progress" });
-    //     }
-
-    //     // Find the bid with the highest amount
-    //     const highestBid = await Bid.findOne({ productId }).sort({
-    //       amount: -1
-    //     });
-
-    //     if (!highestBid) {
-    //       return res
-    //         .status(400)
-    //         .json({ error: "No bids found for the product" });
-    //     }
-
-    //     // Get the winner's details
-    //     const winner = await User.findById(highestBid.bidder);
-
-    //     res.status(200).json({ winner, amount: highestBid.amount });
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving winner" });
+    //     res.status(500).json({ error: "Error retrieving bids" });
     //   }
     // });
 
@@ -353,8 +315,6 @@ async function run() {
         // Check if the current time is greater than the bidding end time
         const currentTime = new Date().getTime();
         const biddingEndTime = new Date(product.endBiddingTime).getTime();
-        console.log(currentTime, "current");
-        console.log(biddingEndTime, "end time is greater than the");
 
         if (currentTime >= biddingEndTime) {
           // Bidding has ended, return the winner
@@ -375,20 +335,12 @@ async function run() {
         res.status(500).json({ error: "Error retrieving winner" });
       }
     });
-
-
-
-
-
-
-
   } finally {
     // Ensures that the client will close when you finish/error
   }
 }
 run().catch(console.dir);
 
-
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.get('/', (req, res) => res.send('KB server is going on '))
-app.listen(port, () => console.log(`KB  app listening on port ${port}!`))
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.get("/", (req, res) => res.send("KB server is going on "));
+app.listen(port, () => console.log(`KB  app listening on port ${port}!`));
