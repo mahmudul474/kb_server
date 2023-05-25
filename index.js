@@ -29,7 +29,7 @@ const storage = multer.diskStorage({
   filename: (req, file, cb) => {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
     cb(null, uniqueSuffix + "-" + file.originalname);
-  }
+  },
 });
 
 const upload = multer({ storage });
@@ -47,8 +47,8 @@ const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
-    deprecationErrors: true
-  }
+    deprecationErrors: true,
+  },
 });
 
 async function run() {
@@ -56,18 +56,25 @@ async function run() {
     const userCollection = client.db("KB").collection("users");
     const productCollection = client.db("KB").collection("products");
 
-
-
     //register
     app.post(
       "/register",
       upload.fields([
         { name: "userPhoto", maxCount: 1 },
-        { name: "nidCardImg", maxCount: 1 }
+        { name: "nidCardImg", maxCount: 1 },
       ]),
       async (req, res) => {
         try {
-          const { name, email, password, phoneNumber } = req.body;
+          const {
+            businessName,
+            businessAddress,
+            tinNum,
+            tradeLN,
+            name,
+            email,
+            password,
+            phoneNumber,
+          } = req.body;
 
           const existingUser = await userCollection.findOne({ email });
 
@@ -79,6 +86,10 @@ async function run() {
 
           // Insert user data into the "users" collection
           const result = await userCollection.insertOne({
+            businessName,
+            businessAddress,
+            tinNum,
+            tradeLN,
             name,
             email,
             password,
@@ -88,7 +99,7 @@ async function run() {
             nidCardImg: req.files["nidCardImg"]
               ? req.files["nidCardImg"][0].path
               : "",
-            phoneNumber
+            phoneNumber,
           });
 
           res.status(200).json({ message: "Registration successful" });
@@ -105,10 +116,10 @@ async function run() {
 
         // Find the user with the given email
 
-        const user = await userCollection.findOne({ email, password });
+        const user = await userCollection.findOne({ email, });
 
         if (!user) {
-          return res.status(401).json({ message: "Invalid email or password" });
+          return res.status(401).json({ message: "Invalid email  " });
         }
         res.status(200).json({ message: "Login successful" });
       } catch (err) {
@@ -122,7 +133,7 @@ async function run() {
       upload.fields([
         { name: "mainImage", maxCount: 1 },
         { name: "subImages", maxCount: 10 },
-        { name: "pdfFile", maxCount: 1 }
+        { name: "pdfFile", maxCount: 1 },
       ]),
       (req, res) => {
         // Process the form data and handle product upload
@@ -153,9 +164,9 @@ async function run() {
           startBiddingTime,
           endBiddingTime,
           mainImage: mainImage.filename,
-          subImages: subImages.map(file => file.filename),
+          subImages: subImages.map((file) => file.filename),
           pdfFile: pdfFile.filename,
-          bids: []
+          bids: [],
         };
 
         productCollection.insertOne(product, (err, result) => {
@@ -168,7 +179,7 @@ async function run() {
             console.log("Product uploaded successfully");
             res.json({
               success: true,
-              message: "Product uploaded successfully"
+              message: "Product uploaded successfully",
             });
           }
         });
@@ -207,12 +218,12 @@ async function run() {
           bidderNumber,
           bidderPhoto,
           productName,
-          productPhoto
+          productPhoto,
         } = req.body;
 
         // Find the product by its ID in the database
         const product = await productCollection.findOne({
-          _id: new ObjectId(productId)
+          _id: new ObjectId(productId),
         });
 
         if (!product) {
@@ -240,7 +251,7 @@ async function run() {
         if (bidAmount < currentHighestBid + minimumBid) {
           return res.status(400).json({
             error:
-              "New price cannot be lower than the current bid price plus the minimum bid amount."
+              "New price cannot be lower than the current bid price plus the minimum bid amount.",
           });
         }
 
@@ -254,7 +265,7 @@ async function run() {
           bidderPhoto,
           productName,
           productPhoto,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         };
 
         product.bids.push(newBid);
@@ -272,37 +283,14 @@ async function run() {
       }
     });
 
-    //  app.get("/products/:productId/bids", async (req, res) => {
-    //    try {
-    //      const { productId } = req.params;
-
-    //      // Find the product by its ID in the database
-    //      const product = await productCollection.findOne({
-    //        _id: new ObjectId(productId)
-    //      });
-
-    //      if (!product) {
-    //        return res.status(404).json({ error: "Product not found" });
-    //      }
-
-    //      res.status(200).json({ bids: product.bids });
-    //    } catch (error) {
-    //      res.status(500).json({ error: "Error retrieving bids" });
-    //    }
-    //  });
-
-
-    //winner 
-    
-    
-    //get winner 
+    //get winner
     app.get("/products/:productId/winner", async (req, res) => {
       try {
         const { productId } = req.params;
 
         // Find the product by its ID in the database
         const product = await productCollection.findOne({
-          _id: new ObjectId(productId)
+          _id: new ObjectId(productId),
         });
 
         if (!product) {
@@ -341,97 +329,71 @@ async function run() {
       }
     });
 
+    //get my all bids
 
-  //get my all bids 
+    app.get("/bids/bidder/:bidderId/products", async (req, res) => {
+      try {
+        const { bidderId } = req.params;
 
-  app.get("/bids/bidder/:bidderId/products", async (req, res) => {
-    try {
-      const { bidderId } = req.params;
-  
-      // Find all products that have bids from the bidder
-      const products = await productCollection.find({
-        "bids.bidderId": bidderId
-      }).toArray();
-  
-      res.status(200).json({ products });
-    } catch (error) {
-      res.status(500).json({ error: "Error retrieving bidder's products" });
-    }
-  });
+        // Find all products that have bids from the bidder
+        const products = await productCollection
+          .find({
+            "bids.bidderId": bidderId,
+          })
+          .toArray();
 
+        res.status(200).json({ products });
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving bidder's products" });
+      }
+    });
 
-  ///get my  win bids 
-  // app.get("/bids/winners/:bidderId", async (req, res) => {
-  //   try {
-  //     const { bidderId } = req.params;
-  
-  //     // Find all products where the bidder has placed a bid
-  //     const products = await productCollection.find({ "bids.bidderId": bidderId }).toArray();
-  
-  //     // Collect the winning bids made by the bidder
-  //     const winnerBids = [];
-  //     products.forEach(product => {
-  //       const highestBid = product.bids.reduce((maxBid, bid) => (bid.amount > maxBid.amount ? bid : maxBid));
-  //       if (highestBid.bidderId === bidderId) {
-  //         winnerBids.push(highestBid);
-  //       }
-  //     });
-  
-  //     res.status(200).json({ bids: winnerBids });
-  //   } catch (error) {
-  //     res.status(500).json({ error: "Error retrieving winner bids" });
-  //   }
-  // });
-  
-  
-  app.get("/bids/bidder/:bidderId/products/won", async (req, res) => {
-    try {
-      const { bidderId } = req.params;
-  
-      // Find all products where the bidder has the highest bid
-      const products = await productCollection.aggregate([
-        {
-          $match: {
-            "bids.bidderId": bidderId
-          }
-        },
-        {
-          $unwind: "$bids"
-        },
-        {
-          $sort: {
-            "bids.amount": -1
-          }
-        },
-        {
-          $group: {
-            _id: "$_id",
-            product: { $first: "$$ROOT" },
-            highestBid: { $first: "$bids" }
-          }
-        },
-        {
-          $project: {
-            _id: "$product._id",
-            name: "$product.name",
-            description: "$product.description",
-            // Add other product fields you want to retrieve
-            highestBid: "$highestBid"
-          }
-        }
-      ]).toArray();
-  
-      res.status(200).json({ wonProducts: products });
-    } catch (error) {
-      res.status(500).json({ error: "Error retrieving won products" });
-    }
-  });
+    ///get my  win bids
 
+    app.get("/bids/bidder/:bidderId/products/won", async (req, res) => {
+      try {
+        const { bidderId } = req.params;
 
+        // Find all products where the bidder has the highest bid
+        const products = await productCollection
+          .aggregate([
+            {
+              $match: {
+                "bids.bidderId": bidderId,
+              },
+            },
+            {
+              $unwind: "$bids",
+            },
+            {
+              $sort: {
+                "bids.amount": -1,
+              },
+            },
+            {
+              $group: {
+                _id: "$_id",
+                product: { $first: "$$ROOT" },
+                highestBid: { $first: "$bids" },
+              },
+            },
+            {
+              $project: {
+                _id: "$product._id",
+                name: "$product.name",
+                description: "$product.description",
+                // Add other product fields you want to retrieve
+                highestBid: "$highestBid",
+              },
+            },
+          ])
+          .toArray();
 
-
-
-
+        res.status(200).json({ wonProducts: products });
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving won products" });
+      }
+    });
   } finally {
     // Ensures that the client will close when you finish/error
   }
