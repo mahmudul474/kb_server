@@ -1,31 +1,38 @@
 const express = require("express");
 const app = express();
-const cors = require("cors");
+var cors = require("cors");
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const multer = require("multer");
 const path = require("path");
 const bcrypt = require("bcrypt");
-const bodyParser = require("body-parser");
-
-
-
-app.use(bodyParser.json());
 
 ///midleWere
-app.use(express.json());
 app.use(cors());
+app.use(express.json());
 
-//server  video storage
+// Multer storage configuration for file uploads
 const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, "uploads/");
+  destination: (req, file, cb) => {
+    if (file.fieldname === "mainImage") {
+      cb(null, "uploads/main-images/");
+    } else if (file.fieldname === "userPhoto") {
+      cb(null, "uploads/user-photos/");
+    } else if (file.fieldname === "nidCardImg") {
+      cb(null, "uploads/nid-card-images/");
+    } else if (file.fieldname === "subImages") {
+      cb(null, "uploads/sub-images/");
+    } else if (file.fieldname === "pdfFile") {
+      cb(null, "uploads/pdf-files/");
+    }
   },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + "-" + file.originalname);
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + "-" + file.originalname);
   }
 });
-const upload = multer({ storage: storage });
+
+const upload = multer({ storage });
 
 ///conncect mongodb
 
@@ -121,8 +128,67 @@ async function run() {
       }
     });
     ///upload   product
+    // app.post(
+    //   "/products",
+    //   upload.fields([
+    //     { name: "mainImage", maxCount: 1 },
+    //     { name: "subImages", maxCount: 10 },
+    //     { name: "pdfFile", maxCount: 1 }
+    //   ]),
+    //   (req, res) => {
+    //     // Process the form data and handle product upload
+
+    //     // Access the form data
+    //     const {
+    //       name,
+    //       description,
+    //       startBiddingPrice,
+    //       buyNowPrice,
+    //       minimumBid,
+    //       startBiddingTime,
+    //       endBiddingTime
+    //     } = req.body;
+
+    //     // Access the uploaded files
+    //     const mainImage = req.files["mainImage"][0];
+    //     const subImages = req.files["subImages"];
+    //     const pdfFile = req.files["pdfFile"][0];
+
+    //     // Save the product data to MongoDB
+    //     const product = {
+    //       name,
+
+    //       description,
+    //       startBiddingPrice,
+    //       buyNowPrice,
+    //       minimumBid,
+    //       startBiddingTime,
+    //       endBiddingTime,
+    //       mainImage: mainImage.filename,
+    //       subImages: subImages.map(file => file.filename),
+    //       pdfFile: pdfFile.filename,
+    //       bids: []
+    //     };
+
+    //     productCollection.insertOne(product, (err, result) => {
+    //       if (err) {
+    //         console.error("Error saving product to MongoDB:", err);
+    //         res
+    //           .status(500)
+    //           .json({ success: false, message: "Error uploading product" });
+    //       } else {
+    //         console.log("Product uploaded successfully");
+    //         res.json({
+    //           success: true,
+    //           message: "Product uploaded successfully"
+    //         });
+    //       }
+    //     });
+    //   }
+    // );
+
     app.post(
-      "/products/upload",
+      "/productsupd",
       upload.fields([
         { name: "mainImage", maxCount: 1 },
         { name: "subImages", maxCount: 10 },
@@ -132,14 +198,15 @@ async function run() {
         // Process the form data and handle product upload
 
         // Access the form data
-        const owner = req.body.owner;
-        const name = req.body.name;
-        const description = req.body.description;
-        const startBiddingPrice = req.body.startBiddingPrice;
-        const buyNowPrice = req.body.buyNowPrice;
-        const minimumBid = req.body.minimumBid;
-        const startBiddingTime = req.body.startBiddingTime;
-        const endBiddingTime = req.body.endBiddingTime;
+        const {
+          name,
+          description,
+          startBiddingPrice,
+          buyNowPrice,
+          minimumBid,
+          startBiddingTime,
+          endBiddingTime
+        } = req.body;
 
         // Access the uploaded files
         const mainImage = req.files["mainImage"][0];
@@ -149,7 +216,6 @@ async function run() {
         // Save the product data to MongoDB
         const product = {
           name,
-          owner,
           description,
           startBiddingPrice,
           buyNowPrice,
@@ -162,11 +228,6 @@ async function run() {
           bids: []
         };
 
-        // const result = productCollection.insertOne(product);
-        // Set the CORS headers
-        res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-        res.setHeader("Access-Control-Allow-Methods", "POST");
-        // res.send(result);
         productCollection.insertOne(product, (err, result) => {
           if (err) {
             console.error("Error saving product to MongoDB:", err);
@@ -398,6 +459,6 @@ async function run() {
 }
 run().catch(console.dir);
 
-app.use("/uploads", express.static("uploads"));
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.get("/", (req, res) => res.send("KB server is going on "));
 app.listen(port, () => console.log(`KB  app listening on port ${port}!`));
