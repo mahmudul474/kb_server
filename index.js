@@ -8,7 +8,11 @@ const path = require("path");
 const bcrypt = require("bcrypt");
 
 ///midleWere
-app.use(cors());
+app.use(
+  cors({
+    origin: "http://localhost:3000"
+  })
+);
 app.use(express.json());
 
 // Multer storage configuration for file uploads
