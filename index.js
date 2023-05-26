@@ -128,67 +128,8 @@ async function run() {
       }
     });
     ///upload   product
-    // app.post(
-    //   "/products",
-    //   upload.fields([
-    //     { name: "mainImage", maxCount: 1 },
-    //     { name: "subImages", maxCount: 10 },
-    //     { name: "pdfFile", maxCount: 1 }
-    //   ]),
-    //   (req, res) => {
-    //     // Process the form data and handle product upload
-
-    //     // Access the form data
-    //     const {
-    //       name,
-    //       description,
-    //       startBiddingPrice,
-    //       buyNowPrice,
-    //       minimumBid,
-    //       startBiddingTime,
-    //       endBiddingTime
-    //     } = req.body;
-
-    //     // Access the uploaded files
-    //     const mainImage = req.files["mainImage"][0];
-    //     const subImages = req.files["subImages"];
-    //     const pdfFile = req.files["pdfFile"][0];
-
-    //     // Save the product data to MongoDB
-    //     const product = {
-    //       name,
-
-    //       description,
-    //       startBiddingPrice,
-    //       buyNowPrice,
-    //       minimumBid,
-    //       startBiddingTime,
-    //       endBiddingTime,
-    //       mainImage: mainImage.filename,
-    //       subImages: subImages.map(file => file.filename),
-    //       pdfFile: pdfFile.filename,
-    //       bids: []
-    //     };
-
-    //     productCollection.insertOne(product, (err, result) => {
-    //       if (err) {
-    //         console.error("Error saving product to MongoDB:", err);
-    //         res
-    //           .status(500)
-    //           .json({ success: false, message: "Error uploading product" });
-    //       } else {
-    //         console.log("Product uploaded successfully");
-    //         res.json({
-    //           success: true,
-    //           message: "Product uploaded successfully"
-    //         });
-    //       }
-    //     });
-    //   }
-    // );
-
     app.post(
-      "/productsupd",
+      "/products",
       upload.fields([
         { name: "mainImage", maxCount: 1 },
         { name: "subImages", maxCount: 10 },
@@ -216,6 +157,7 @@ async function run() {
         // Save the product data to MongoDB
         const product = {
           name,
+
           description,
           startBiddingPrice,
           buyNowPrice,
