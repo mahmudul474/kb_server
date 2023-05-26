@@ -6,33 +6,26 @@ const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const multer = require("multer");
 const path = require("path");
 const bcrypt = require("bcrypt");
+const bodyParser = require("body-parser");
+
+
+
+app.use(bodyParser.json());
 
 ///midleWere
 app.use(express.json());
 app.use(cors());
 
-// Multer storage configuration for file uploads
+//server  video storage
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (file.fieldname === "mainImage") {
-      cb(null, "uploads/main-images/");
-    } else if (file.fieldname === "userPhoto") {
-      cb(null, "uploads/user-photos/");
-    } else if (file.fieldname === "nidCardImg") {
-      cb(null, "uploads/nid-card-images/");
-    } else if (file.fieldname === "subImages") {
-      cb(null, "uploads/sub-images/");
-    } else if (file.fieldname === "pdfFile") {
-      cb(null, "uploads/pdf-files/");
-    }
+  destination: function (req, file, cb) {
+    cb(null, "uploads/");
   },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + "-" + file.originalname);
-  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname);
+  }
 });
-
-const upload = multer({ storage });
+const upload = multer({ storage: storage });
 
 ///conncect mongodb
 
@@ -47,8 +40,8 @@ const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
-    deprecationErrors: true,
-  },
+    deprecationErrors: true
+  }
 });
 
 async function run() {
@@ -61,7 +54,7 @@ async function run() {
       "/register",
       upload.fields([
         { name: "userPhoto", maxCount: 1 },
-        { name: "nidCardImg", maxCount: 1 },
+        { name: "nidCardImg", maxCount: 1 }
       ]),
       async (req, res) => {
         try {
@@ -73,7 +66,7 @@ async function run() {
             name,
             email,
             password,
-            phoneNumber,
+            phoneNumber
           } = req.body;
 
           const existingUser = await userCollection.findOne({ email });
@@ -99,7 +92,7 @@ async function run() {
             nidCardImg: req.files["nidCardImg"]
               ? req.files["nidCardImg"][0].path
               : "",
-            phoneNumber,
+            phoneNumber
           });
 
           res.status(200).json({ message: "Registration successful" });
@@ -116,7 +109,7 @@ async function run() {
 
         // Find the user with the given email
 
-        const user = await userCollection.findOne({ email, });
+        const user = await userCollection.findOne({ email });
 
         if (!user) {
           return res.status(401).json({ message: "Invalid email  " });
@@ -129,11 +122,11 @@ async function run() {
     });
     ///upload   product
     app.post(
-      "/products",
+      "/products/upload",
       upload.fields([
         { name: "mainImage", maxCount: 1 },
         { name: "subImages", maxCount: 10 },
-        { name: "pdfFile", maxCount: 1 },
+        { name: "pdfFile", maxCount: 1 }
       ]),
       (req, res) => {
         // Process the form data and handle product upload
@@ -164,11 +157,16 @@ async function run() {
           startBiddingTime,
           endBiddingTime,
           mainImage: mainImage.filename,
-          subImages: subImages.map((file) => file.filename),
+          subImages: subImages.map(file => file.filename),
           pdfFile: pdfFile.filename,
-          bids: [],
+          bids: []
         };
 
+        // const result = productCollection.insertOne(product);
+        // Set the CORS headers
+        res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+        res.setHeader("Access-Control-Allow-Methods", "POST");
+        // res.send(result);
         productCollection.insertOne(product, (err, result) => {
           if (err) {
             console.error("Error saving product to MongoDB:", err);
@@ -179,7 +177,7 @@ async function run() {
             console.log("Product uploaded successfully");
             res.json({
               success: true,
-              message: "Product uploaded successfully",
+              message: "Product uploaded successfully"
             });
           }
         });
@@ -218,12 +216,12 @@ async function run() {
           bidderNumber,
           bidderPhoto,
           productName,
-          productPhoto,
+          productPhoto
         } = req.body;
 
         // Find the product by its ID in the database
         const product = await productCollection.findOne({
-          _id: new ObjectId(productId),
+          _id: new ObjectId(productId)
         });
 
         if (!product) {
@@ -251,7 +249,7 @@ async function run() {
         if (bidAmount < currentHighestBid + minimumBid) {
           return res.status(400).json({
             error:
-              "New price cannot be lower than the current bid price plus the minimum bid amount.",
+              "New price cannot be lower than the current bid price plus the minimum bid amount."
           });
         }
 
@@ -265,7 +263,7 @@ async function run() {
           bidderPhoto,
           productName,
           productPhoto,
-          timestamp: new Date().toISOString(),
+          timestamp: new Date().toISOString()
         };
 
         product.bids.push(newBid);
@@ -290,7 +288,7 @@ async function run() {
 
         // Find the product by its ID in the database
         const product = await productCollection.findOne({
-          _id: new ObjectId(productId),
+          _id: new ObjectId(productId)
         });
 
         if (!product) {
@@ -338,7 +336,7 @@ async function run() {
         // Find all products that have bids from the bidder
         const products = await productCollection
           .find({
-            "bids.bidderId": bidderId,
+            "bids.bidderId": bidderId
           })
           .toArray();
 
@@ -359,23 +357,23 @@ async function run() {
           .aggregate([
             {
               $match: {
-                "bids.bidderId": bidderId,
-              },
+                "bids.bidderId": bidderId
+              }
             },
             {
-              $unwind: "$bids",
+              $unwind: "$bids"
             },
             {
               $sort: {
-                "bids.amount": -1,
-              },
+                "bids.amount": -1
+              }
             },
             {
               $group: {
                 _id: "$_id",
                 product: { $first: "$$ROOT" },
-                highestBid: { $first: "$bids" },
-              },
+                highestBid: { $first: "$bids" }
+              }
             },
             {
               $project: {
@@ -383,9 +381,9 @@ async function run() {
                 name: "$product.name",
                 description: "$product.description",
                 // Add other product fields you want to retrieve
-                highestBid: "$highestBid",
-              },
-            },
+                highestBid: "$highestBid"
+              }
+            }
           ])
           .toArray();
 
@@ -400,6 +398,6 @@ async function run() {
 }
 run().catch(console.dir);
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/uploads", express.static("uploads"));
 app.get("/", (req, res) => res.send("KB server is going on "));
 app.listen(port, () => console.log(`KB  app listening on port ${port}!`));
