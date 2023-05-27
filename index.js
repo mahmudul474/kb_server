@@ -5,14 +5,10 @@ const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const multer = require("multer");
 const path = require("path");
-const bcrypt = require("bcrypt");
+
 
 ///midleWere
-app.use(
-  cors({
-    origin: "http://localhost:3000"
-  })
-);
+app.use(cors());
 app.use(express.json());
 
 // Multer storage configuration for file uploads
@@ -132,64 +128,21 @@ async function run() {
       }
     });
     ///upload   product
-    app.post(
-      "/products",
-      upload.fields([
-        { name: "mainImage", maxCount: 1 },
-        { name: "subImages", maxCount: 10 },
-        { name: "pdfFile", maxCount: 1 }
-      ]),
-      (req, res) => {
-        // Process the form data and handle product upload
 
-        // Access the form data
-        const {
-          name,
-          description,
-          startBiddingPrice,
-          buyNowPrice,
-          minimumBid,
-          startBiddingTime,
-          endBiddingTime
-        } = req.body;
+    app.post("/products", async (req, res) => {
+      try {
+        const product = req.body;
 
-        // Access the uploaded files
-        const mainImage = req.files["mainImage"][0];
-        const subImages = req.files["subImages"];
-        const pdfFile = req.files["pdfFile"][0];
+        // Insert the product into the product collection
+        await productCollection.insertOne(product);
 
-        // Save the product data to MongoDB
-        const product = {
-          name,
-
-          description,
-          startBiddingPrice,
-          buyNowPrice,
-          minimumBid,
-          startBiddingTime,
-          endBiddingTime,
-          mainImage: mainImage.filename,
-          subImages: subImages.map(file => file.filename),
-          pdfFile: pdfFile.filename,
-          bids: []
-        };
-
-        productCollection.insertOne(product, (err, result) => {
-          if (err) {
-            console.error("Error saving product to MongoDB:", err);
-            res
-              .status(500)
-              .json({ success: false, message: "Error uploading product" });
-          } else {
-            console.log("Product uploaded successfully");
-            res.json({
-              success: true,
-              message: "Product uploaded successfully"
-            });
-          }
-        });
+        // Send success message
+        res.status(200).json({ message: "Product  upload  successfully" });
+      } catch (error) {
+        // Send error message
+        res.status(500).json({ message: "  product not  upload " });
       }
-    );
+    });
 
     ///get  singel user
     app.get("/user/:email", async (req, res) => {
