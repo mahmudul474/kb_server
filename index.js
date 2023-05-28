@@ -157,30 +157,23 @@ async function run() {
       const result = await productCollection.find({}).toArray();
       res.send(result);
     });
-    //get singel product
-    // app.get("/products/:id", async (req, res) => {
-    //   const productId = req.params.id;
-    //   const query = { _id: new ObjectId(productId) };
-    //   const result = await productCollection.findOne(query);
-    //   res.send(result);
-    // });
 
-    ///wekly end  bit
-    // app.get("/products/bidding-end", async (req, res) => {
-    //   try {
-    //     const currentDate = new Date();
-    //     const endDate = new Date();
-    //     endDate.setDate(currentDate.getDate() + 7);
+    //wekly end  bit
+    app.get("/products/bidding-end", async (req, res) => {
+      try {
+        const currentDate = new Date();
+        const endDate = new Date();
+        endDate.setDate(currentDate.getDate() + 7);
 
-    //     console.log(endDate);
+        console.log(endDate);
 
-    //     const products = await productCollection.find({}).toArray();
+        const products = await productCollection.find({}).toArray();
 
-    //     res.json({ products });
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving products" });
-    //   }
-    // });
+        res.json({ products });
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving products" });
+      }
+    });
 
     app.get("/products/bidding-end-week", async (req, res) => {
       try {
@@ -205,6 +198,7 @@ async function run() {
         res.status(500).json({ error: "Error retrieving products" });
       }
     });
+    //end month
     app.get("/products/bidding-end-month", async (req, res) => {
       try {
         // Retrieve the current date/time
@@ -233,7 +227,7 @@ async function run() {
         res.status(500).json({ error: "Error retrieving products" });
       }
     });
-
+    //upcomming
     app.get("/products/upcoming", async (req, res) => {
       try {
         // Retrieve the current date/time
@@ -254,6 +248,13 @@ async function run() {
       }
     });
 
+    //get singel product
+    app.get("/products/:id", async (req, res) => {
+      const productId = req.params.id;
+      const query = { _id: new ObjectId(productId) };
+      const result = await productCollection.findOne(query);
+      res.send(result);
+    });
     ///place bid
     app.post("/products/:productId/bids", async (req, res) => {
       try {
@@ -442,6 +443,63 @@ async function run() {
         res.status(500).json({ error: "Error retrieving won products" });
       }
     });
+
+    ///get all winner
+    // app.get("/bids/winners", async (req, res) => {
+    //   try {
+    //     // Find all products with at least one bid
+    //     const productsWithBids = await productCollection
+    //       .find({ bids: { $exists: true, $not: { $size: 0 } } })
+    //       .toArray();
+
+    //     // Extract unique bidderIds from the products
+    //     const bidderIds = productsWithBids.flatMap(product =>
+    //       product.bids.map(bid => bid.bidderId)
+    //     );
+    //     const uniqueBidderIds = [...new Set(bidderIds)];
+
+    //     console.log(uniqueBidderIds);
+
+    //     // Retrieve the users who have won at least one product
+
+    //     const winners = await userCollection
+    //       .find({ _id: { $in: new ObjectId(uniqueBidderIds) } })
+    //       .toArray();
+
+    //     res.status(200).json({ winners });
+    //   } catch (error) {
+    //     res.status(500).json({ error: "Error retrieving winners" });
+    //   }
+    // });
+
+    app.get("/bids/winners", async (req, res) => {
+      try {
+        const products = await productCollection.find({}).toArray();
+        const winners = [];
+
+        for (const product of products) {
+          if (product.bids.length > 0) {
+            const sortedBids = product.bids.sort((a, b) => b.amount - a.amount);
+            const highestBid = sortedBids[0];
+
+            winners.push({
+              productId: product._id,
+              productName: product.name,
+              winnerId: highestBid.bidderId,
+              winnerName: highestBid.bidderName,
+              winningAmount: highestBid.amount
+            });
+          }
+        }
+
+        res.status(200).json({ winners });
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving winners" });
+      }
+    });
+
+
+
   } finally {
     // Ensures that the client will close when you finish/error
   }
