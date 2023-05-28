@@ -158,12 +158,102 @@ async function run() {
       res.send(result);
     });
     //get singel product
-    app.get("/products/:id", async (req, res) => {
-      const productId = req.params.id;
-      const query = { _id: new ObjectId(productId) };
-      const result = await productCollection.findOne(query);
-      res.send(result);
+    // app.get("/products/:id", async (req, res) => {
+    //   const productId = req.params.id;
+    //   const query = { _id: new ObjectId(productId) };
+    //   const result = await productCollection.findOne(query);
+    //   res.send(result);
+    // });
+
+    ///wekly end  bit
+    // app.get("/products/bidding-end", async (req, res) => {
+    //   try {
+    //     const currentDate = new Date();
+    //     const endDate = new Date();
+    //     endDate.setDate(currentDate.getDate() + 7);
+
+    //     console.log(endDate);
+
+    //     const products = await productCollection.find({}).toArray();
+
+    //     res.json({ products });
+    //   } catch (error) {
+    //     res.status(500).json({ error: "Error retrieving products" });
+    //   }
+    // });
+
+    app.get("/products/bidding-end-week", async (req, res) => {
+      try {
+        // Retrieve the current date/time
+        const products = await productCollection.find({}).toArray();
+
+        const currentDate = new Date();
+        const today = currentDate.toISOString().slice(0, 16);
+        const futureDate = new Date(
+          currentDate.setDate(currentDate.getDate() + 7)
+        );
+        const formattedDate = futureDate.toISOString().slice(0, 16);
+
+        const filteredProducts = products.filter(
+          product =>
+            product.endBiddingTime < formattedDate &&
+            product.endBiddingTime > today
+        );
+
+        res.send(filteredProducts);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving products" });
+      }
     });
+    app.get("/products/bidding-end-month", async (req, res) => {
+      try {
+        // Retrieve the current date/time
+        const products = await productCollection.find({}).toArray();
+
+        const currentDate = new Date();
+
+        const sevenDay = new Date(
+          currentDate.setDate(currentDate.getDate() + 7)
+        );
+        const biggethenSeven = sevenDay.toISOString().slice(0, 16);
+
+        const futureDate = new Date(
+          currentDate.setDate(currentDate.getDate() + 30)
+        );
+        const formattedDate = futureDate.toISOString().slice(0, 16);
+
+        const filteredProducts = products.filter(
+          product =>
+            product.endBiddingTime < formattedDate &&
+            product.endBiddingTime > biggethenSeven
+        );
+
+        res.send(filteredProducts);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving products" });
+      }
+    });
+
+    app.get("/products/upcoming", async (req, res) => {
+      try {
+        // Retrieve the current date/time
+        const products = await productCollection.find({}).toArray();
+
+        const currentDate = new Date();
+
+        const futureDate = new Date(currentDate.setDate(currentDate.getDate()));
+        const formattedDate = futureDate.toISOString().slice(0, 16);
+
+        const filteredProducts = products.filter(
+          product => product.startBiddingTime < formattedDate
+        );
+
+        res.send(filteredProducts);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving products" });
+      }
+    });
+
     ///place bid
     app.post("/products/:productId/bids", async (req, res) => {
       try {
