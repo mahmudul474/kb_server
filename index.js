@@ -3,36 +3,12 @@ const app = express();
 var cors = require("cors");
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
-const multer = require("multer");
+ 
 const path = require("path");
-
 
 ///midleWere
 app.use(cors());
 app.use(express.json());
-
-// Multer storage configuration for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    if (file.fieldname === "mainImage") {
-      cb(null, "uploads/main-images/");
-    } else if (file.fieldname === "userPhoto") {
-      cb(null, "uploads/user-photos/");
-    } else if (file.fieldname === "nidCardImg") {
-      cb(null, "uploads/nid-card-images/");
-    } else if (file.fieldname === "subImages") {
-      cb(null, "uploads/sub-images/");
-    } else if (file.fieldname === "pdfFile") {
-      cb(null, "uploads/pdf-files/");
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, uniqueSuffix + "-" + file.originalname);
-  }
-});
-
-const upload = multer({ storage });
 
 ///conncect mongodb
 
@@ -58,25 +34,15 @@ async function run() {
 
     //register
     app.post(
-      "/register",
-      upload.fields([
-        { name: "userPhoto", maxCount: 1 },
-        { name: "nidCardImg", maxCount: 1 }
-      ]),
+      "/registrations",
+
       async (req, res) => {
         try {
-          const {
-            businessName,
-            businessAddress,
-            tinNum,
-            tradeLN,
-            name,
-            email,
-            password,
-            phoneNumber
-          } = req.body;
+          const user = req.body;
 
-          const existingUser = await userCollection.findOne({ email });
+          const existingUser = await userCollection.findOne({
+            email: user.email
+          });
 
           if (existingUser) {
             return res
@@ -85,22 +51,7 @@ async function run() {
           }
 
           // Insert user data into the "users" collection
-          const result = await userCollection.insertOne({
-            businessName,
-            businessAddress,
-            tinNum,
-            tradeLN,
-            name,
-            email,
-            password,
-            userPhoto: req.files["userPhoto"]
-              ? req.files["userPhoto"][0].path
-              : "",
-            nidCardImg: req.files["nidCardImg"]
-              ? req.files["nidCardImg"][0].path
-              : "",
-            phoneNumber
-          });
+          const result = await userCollection.insertOne(user);
 
           res.status(200).json({ message: "Registration successful" });
         } catch (err) {
@@ -144,6 +95,16 @@ async function run() {
       }
     });
 
+
+ ///get  singel user 
+
+
+   app.get("/users", async(req,res)=>{
+  const result =await userCollection.find({}).toArray()
+ res.send(result)
+   })
+
+
     ///get  singel user
     app.get("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -151,6 +112,14 @@ async function run() {
       const user = await userCollection.findOne(query);
       res.send(user);
     });
+   
+
+     
+
+
+
+
+
 
     // get all  product
     app.get("/products", async (req, res) => {
@@ -445,32 +414,6 @@ async function run() {
     });
 
     ///get all winner
-    // app.get("/bids/winners", async (req, res) => {
-    //   try {
-    //     // Find all products with at least one bid
-    //     const productsWithBids = await productCollection
-    //       .find({ bids: { $exists: true, $not: { $size: 0 } } })
-    //       .toArray();
-
-    //     // Extract unique bidderIds from the products
-    //     const bidderIds = productsWithBids.flatMap(product =>
-    //       product.bids.map(bid => bid.bidderId)
-    //     );
-    //     const uniqueBidderIds = [...new Set(bidderIds)];
-
-    //     console.log(uniqueBidderIds);
-
-    //     // Retrieve the users who have won at least one product
-
-    //     const winners = await userCollection
-    //       .find({ _id: { $in: new ObjectId(uniqueBidderIds) } })
-    //       .toArray();
-
-    //     res.status(200).json({ winners });
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving winners" });
-    //   }
-    // });
 
     app.get("/bids/winners", async (req, res) => {
       try {
@@ -497,15 +440,12 @@ async function run() {
         res.status(500).json({ error: "Error retrieving winners" });
       }
     });
-
-
-
   } finally {
     // Ensures that the client will close when you finish/error
   }
 }
 run().catch(console.dir);
 
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+ 
 app.get("/", (req, res) => res.send("KB server is going on "));
 app.listen(port, () => console.log(`KB  app listening on port ${port}!`));
