@@ -2,8 +2,10 @@ const express = require("express");
 const app = express();
 var cors = require("cors");
 const port = process.env.PORT || 5000;
+const jwt = require("jsonwebtoken");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
- 
+require("dotenv").config();
+
 const path = require("path");
 
 ///midleWere
@@ -14,6 +16,24 @@ app.use(express.json());
 
 // re9jTYZ8BjknXtHT
 // kbHome
+
+////veryfyjwt
+
+function veryfyjwt(req, res, next) {
+  const authheader = req.headers.authorization;
+  if (!authheader) {
+    return res.status(401).send("unauthorized");
+  }
+  const token = authheader.split(" ")[1];
+
+  jwt.verify(token, process.env.JWT_ACCESS_TOKEN, (err, decoded) => {
+    if (err) {
+      return res.status(401).send({ message: "unauthorized" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+}
 
 const uri =
   "mongodb+srv://kbHome:re9jTYZ8BjknXtHT@softopark.ockrkce.mongodb.net/?retryWrites=true&w=majority";
@@ -31,6 +51,31 @@ async function run() {
   try {
     const userCollection = client.db("KB").collection("users");
     const productCollection = client.db("KB").collection("products");
+
+    ///admin veryfy
+
+    const verifyAdmin = async (req, res, next) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await userCollection.findOne(query);
+      if (user?.role !== "admin") {
+        return res.status(403).send({ message: "unauthorized" });
+      }
+
+      next();
+    };
+
+    ///verify Seller
+
+    const verifySeller = async (req, res, next) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await userCollection.findOne(query);
+      if (user?.role !== "seller") {
+        return res.status(403).send({ message: "forbiden accees" });
+      }
+      next();
+    };
 
     //register
     app.post(
@@ -61,14 +106,12 @@ async function run() {
       }
     );
     //login
+
     app.post("/login", async (req, res) => {
       try {
-        const { email, password } = req.body;
-
+        const { email } = req.body;
         // Find the user with the given email
-
         const user = await userCollection.findOne({ email });
-
         if (!user) {
           return res.status(401).json({ message: "Invalid email  " });
         }
@@ -78,8 +121,92 @@ async function run() {
         res.status(500).json({ message: "Login failed" });
       }
     });
-    ///upload   product
 
+    ///upd  user profile
+
+    app.put("/user/:email", async (req, res) => {
+      const email = req.params.email;
+
+      console.log(email);
+      const info = req.body;
+      console.log(info, "api is hittet ");
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          name: info.name,
+          phoneNumber: info?.phoneNumber,
+          userPhoto: info?.userPhoto
+        }
+      };
+
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+      res.send(result);
+    });
+
+    app.get("/jwt", async (req, res) => {
+      const email = req.query.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      if (user) {
+        const token = jwt.sign({ email }, process.env.JWT_ACCESS_TOKEN, {
+          expiresIn: "1d"
+        });
+
+        return res.send({ accessToken: token });
+      }
+
+      res.status(403).send({ accessToken: "" });
+    });
+
+    ///get  all  users
+
+    app.get("/users", async (req, res) => {
+      const result = await userCollection.find({}).toArray();
+      res.send(result);
+    });
+
+    //make  admin
+
+    app.put("/user/admin/:id", veryfyjwt, async (req, res) => {
+      const decodedEmail = req.decoded.email;
+      const query = { email: decodedEmail };
+      const user = await userCollection.findOne(query);
+
+      if (user.role !== "admin") {
+        return res.status(403).send({ message: "forbidden acces" });
+      }
+
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const option = { upsert: true };
+      const updateDoc = {
+        $set: {
+          role: "admin"
+        }
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, option);
+      res.send(result);
+    });
+
+    //perticuller  user admin
+
+    app.get("/user/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email:email };
+      const user = await userCollection.findOne(query);
+      res.send({ isAdmin: user?.role === "admin" });
+    });
+
+    ///get  singel user
+    app.get("/user/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      res.send(user);
+    });
+
+    ///upload   product
     app.post("/products", async (req, res) => {
       try {
         const product = req.body;
@@ -94,32 +221,6 @@ async function run() {
         res.status(500).json({ message: "  product not  upload " });
       }
     });
-
-
- ///get  singel user 
-
-
-   app.get("/users", async(req,res)=>{
-  const result =await userCollection.find({}).toArray()
- res.send(result)
-   })
-
-
-    ///get  singel user
-    app.get("/user/:email", async (req, res) => {
-      const email = req.params.email;
-      const query = { email: email };
-      const user = await userCollection.findOne(query);
-      res.send(user);
-    });
-   
-
-     
-
-
-
-
-
 
     // get all  product
     app.get("/products", async (req, res) => {
