@@ -215,6 +215,22 @@ async function run() {
       res.send(result);
     });
 
+    //   delete role// disable role
+
+    app.put("/user/disabled/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          role: "disabled"
+        }
+      };
+      const result = await userCollection.updateOne(filter, updateDoc, options);
+
+      res.json({ result, message: "disabled, successfully" });
+    });
+
     ///delete user
 
     app.delete("/delete/user/:id", async (req, res) => {
@@ -301,6 +317,31 @@ async function run() {
         options
       );
       res.send(result);
+    });
+
+    /// delete seller
+
+    app.delete("/deleteseller/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      console.log("api deE");
+
+      userCollection.updateOne(
+        { email: email },
+        { $set: { role: "" } },
+        err => {
+          if (err) {
+            console.error("Failed to update user role:", err);
+            return res
+              .status(500)
+              .json({ error: "Failed to approve host request." });
+          }
+        }
+      );
+
+      const result = await hostRequestsCollection.deleteOne(query);
+
+      res.json({ result, message: " deleted seller  request " });
     });
 
     /// get my   request
