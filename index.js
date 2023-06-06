@@ -51,6 +51,7 @@ async function run() {
   try {
     const userCollection = client.db("KB").collection("users");
     const productCollection = client.db("KB").collection("products");
+    const hostRequestsCollection = client.db("KB").collection("hostRequests");
 
     ///admin veryfy
 
@@ -189,11 +190,120 @@ async function run() {
       res.send(result);
     });
 
-    //perticuller  user admin
+    //make   bidder
 
+    app.put("/user/bidder/:id", async (req, res) => {
+      const id = req.params.id;
+      const { phoneNumber, businessName, businessAddress, tinNum, tradeLN } =
+        req.body;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const uptadeDoc = {
+        $set: {
+          role: "bidder",
+          phoneNumber,
+          businessName,
+          businessAddress,
+          tinNum,
+          tradeLN
+        }
+      };
+
+      const result = await userCollection.updateOne(filter, uptadeDoc, options);
+      res.send(result);
+    });
+
+    ///send  issues messages
+    app.put("/admin/messages/:id", async (req, res) => {
+      const id = req.params.id;
+      const message = req.body;
+
+      const filter = { _id: new ObjectId(id) };
+      const uptadeDoc = {
+        $set: {
+          message
+        }
+      };
+      const options = { upsert: true };
+
+      const result = await userCollection.updateOne(filter, uptadeDoc, options);
+      console.log(result);
+      res.send(result);
+    });
+
+    // POST request to submit a host request
+    app.post("/seller/requests/:email", async (req, res) => {
+      const info = req.body;
+      const email = req.params.email;
+
+      const alreadeseller = await hostRequestsCollection.findOne({
+        email: email
+      });
+      if (alreadeseller) {
+        return res.status(403).send({ message: "already send request" });
+      }
+
+      console.log(alreadeseller);
+
+      const result = await hostRequestsCollection.insertOne({
+        info,
+        email,
+        status: "pending"
+      });
+      res.json({ result, message: "seller request successfully sent" });
+    });
+
+    // GET request to retrieve all host requests
+    app.get("/admin/host-requests", async (req, res) => {
+      const result = await hostRequestsCollection.find({}).toArray();
+      res.send(result);
+    });
+
+    //appove  admin my seller request
+    app.put("/admin/sellerRequests/approve/:email", async (req, res) => {
+      console.log("api ius hit");
+      const email = req.params.email;
+      const filter = { email: email };
+      const options = { upsert: true };
+      const uptadeDoc = {
+        $set: {
+          status: "approved"
+        }
+      };
+
+      userCollection.updateOne(
+        { email: email },
+        { $set: { role: "seller" } },
+        err => {
+          if (err) {
+            console.error("Failed to update user role:", err);
+            return res
+              .status(500)
+              .json({ error: "Failed to approve host request." });
+          }
+        }
+      );
+
+      const result = await hostRequestsCollection.updateOne(
+        filter,
+        uptadeDoc,
+        options
+      );
+      res.send(result);
+    });
+
+    /// get my   request
+    app.get("/user/my-request/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await hostRequestsCollection.findOne(query);
+      res.send(result);
+    });
+
+    //perticuller  user admin
     app.get("/user/admin/:email", async (req, res) => {
       const email = req.params.email;
-      const query = { email:email };
+      const query = { email: email };
       const user = await userCollection.findOne(query);
       res.send({ isAdmin: user?.role === "admin" });
     });
