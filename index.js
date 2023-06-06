@@ -163,7 +163,9 @@ async function run() {
     ///get  all  users
 
     app.get("/users", async (req, res) => {
-      const result = await userCollection.find({}).toArray();
+      const email = req.query.email;
+      const users = await userCollection.find({}).toArray();
+      const result = users.filter(user => user.email !== email);
       res.send(result);
     });
 
@@ -211,6 +213,15 @@ async function run() {
 
       const result = await userCollection.updateOne(filter, uptadeDoc, options);
       res.send(result);
+    });
+
+    ///delete user
+
+    app.delete("/delete/user/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
+      res.json({ result, message: " deleted successfully" });
     });
 
     ///send  issues messages
