@@ -390,6 +390,51 @@ async function run() {
       res.send(result);
     });
 
+    ///admin  uptade a product
+
+    app.put("/product/update/:id", async (req, res) => {
+      const id = req.params.id;
+      const {
+        name,
+        description,
+        startBiddingPrice,
+        buyNowPrice,
+        minimumBid,
+        startBiddingTime,
+        endBiddingTime
+      } = req.body;
+      const filter = { _id: new ObjectId(id) };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: {
+          name,
+          description,
+          startBiddingPrice,
+          buyNowPrice,
+          minimumBid,
+          startBiddingTime,
+          endBiddingTime
+        }
+      };
+
+      const result = await productCollection.updateOne(
+        filter,
+        updateDoc,
+        options
+      );
+
+      res.json({ result, message: "product updated successfully" });
+    });
+
+    // admin delete  product
+
+    app.delete("/products/admin/delete/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await productCollection.deleteOne(query);
+      res.json({ result, message: "  deleted product successfully" });
+    });
+
     //wekly end  bit
     app.get("/products/bidding-end", async (req, res) => {
       try {
