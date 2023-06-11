@@ -1,0 +1,152 @@
+[
+  {
+    "_id": "6472de9bbc1108552267ee77",
+    "name": "Kb-SBS",
+    "description": "KB allways  best ",
+    "startBiddingPrice": "100",
+    "buyNowPrice": "33333",
+    "minimumBid": "20",
+    "startBiddingTime": "2023-05-28T10:53",
+    "endBiddingTime": "2023-06-27T10:53",
+    "mainImage": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/main-image-1685249688226.png",
+    "subImages": [
+      "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/sub-image-1-1685249689210.png",
+      "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/sub-image-2-1685249689683.png",
+      "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/sub-image-3-1685249690220.png",
+      "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/sub-image-4-1685249690600.png"
+    ],
+    "pdfFile": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/uploaded-file-1685249690862.pdf",
+    "author": "777777777",
+    "authorEmail": "e777x@gmail.com",
+    "bids": [
+      {
+        "amount": 100,
+        "bidderName": "d333333mohammod",
+        "bidderId": "647491d06d952718fcf451ff",
+        "bidderEmail": "44444444@gmail.com",
+        "bidderNumber": "44444",
+        "bidderPhoto": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/Screenshot_3.png",
+        "productName": "Kb-SBS",
+        "productPhoto": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/main-image-1685249688226.png",
+        "timestamp": "2023-05-29T11:52:39.115Z"
+      },
+      {
+        "amount": 250000,
+        "bidderName": "MdFaisal",
+        "bidderId": "647493066d952718fcf45200",
+        "bidderEmail": "email@gmail.com",
+        "bidderNumber": "01682762217",
+        "bidderPhoto": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/Hero%20Image.png",
+        "productName": "Kb-SBS",
+        "productPhoto": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/main-image-1685249688226.png",
+        "timestamp": "2023-05-29T11:58:06.194Z"
+      },
+      {
+        "amount": 3.3333333333333335e21,
+        "bidderName": "sobujeeee",
+        "bidderId": "647f4fde440cdff2a1ba0a48",
+        "bidderEmail": "hasan.softopark@gmail.com",
+        "bidderNumber": "01906479710",
+        "bidderPhoto": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/download%20%281%29.jpg",
+        "productName": "Kb-SBS",
+        "productPhoto": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/main-image-1685249688226.png",
+        "timestamp": "2023-06-07T12:18:16.924Z"
+      },
+      {
+        "amount": 4.444555555555444e25,
+        "bidderName": "HasibAbdul",
+        "bidderId": "64808080a61e06ff2fdb2861",
+        "bidderEmail": "johukum.com@gmail.com",
+        "bidderNumber": null,
+        "bidderPhoto": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/WhatsApp%20Image%202023-06-07%20at%206.41.02%20PM.jpeg",
+        "productName": "Kb-SBS",
+        "productPhoto": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/main-image-1685249688226.png",
+        "timestamp": "2023-06-07T13:13:17.469Z"
+      }
+    ]
+  },
+  {
+    "_id": "647478ed27fe67ed22ec260e",
+    "name": "winer check",
+    "description": "check win",
+    "startBiddingPrice": "22",
+    "buyNowPrice": "222",
+    "minimumBid": "2",
+    "startBiddingTime": "2023-05-29T16:05",
+    "endBiddingTime": "2023-05-29T16:06",
+    "mainImage": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/main-image-1685354710732.png",
+    "subImages": [
+      "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/sub-image-1-1685354712145.png",
+      "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/sub-image-2-1685354712709.png",
+      "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/sub-image-3-1685354713424.png"
+    ],
+    "pdfFile": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/uploaded-file-1685354713761.pdf",
+    "author": "digifinexhot line",
+    "authorEmail": "mdsmahmudssullcccca474@gmail.com",
+    "bids": []
+  },
+  {
+    "_id": "6474794fc3f79d9d49667a04",
+    "name": "winter",
+    "description": "3",
+    "startBiddingPrice": "100",
+    "buyNowPrice": "33333",
+    "minimumBid": "100",
+    "startBiddingTime": "2023-05-29T16:06",
+    "endBiddingTime": "2023-09-29T16:09",
+    "mainImage": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/main-image-1685354827774.png",
+    "subImages": [
+      "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/sub-image-1-1685354828640.png",
+      "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/sub-image-2-1685354828932.png",
+      "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/sub-image-3-1685354829242.png",
+      "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/sub-image-4-1685354829693.png"
+    ],
+    "pdfFile": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/uploaded-file-1685354829961.pdf",
+    "author": "digifinexhot line",
+    "authorEmail": "mdsmahmudssullcccca474@gmail.com",
+    "bids": [
+      {
+        "amount": 43,
+        "bidderName": "digifinexhot line",
+        "bidderId": "64746801c79159e21cdd1c60",
+        "bidderEmail": "mdsmahmudssullcccca474@gmail.com",
+        "bidderNumber": null,
+        "bidderPhoto": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/download%20%281%29.jpg",
+        "productName": "win ",
+        "productPhoto": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/main-image-1685354827774.png",
+        "timestamp": "2023-05-29T10:07:34.474Z"
+      },
+      {
+        "amount": 90,
+        "bidderName": "digifinexhot line",
+        "bidderId": "64746801c79159e21cdd1c60",
+        "bidderEmail": "mdsmahmudssullcccca474@gmail.com",
+        "bidderNumber": null,
+        "bidderPhoto": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/download%20%281%29.jpg",
+        "productName": "win ",
+        "productPhoto": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/main-image-1685354827774.png",
+        "timestamp": "2023-05-29T10:07:57.084Z"
+      }
+    ]
+  },
+  {
+    "_id": "648378c3783684821041d6c6",
+    "name": "f",
+    "description": "",
+    "startBiddingPrice": "33333333333",
+    "buyNowPrice": "333333",
+    "minimumBid": "333",
+    "startBiddingTime": "2023-06-10T01:09",
+    "endBiddingTime": "2023-06-10T03:08",
+    "mainImage": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/main-image-1686337726861.png",
+    "subImages": [],
+    "pdfFile": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/path/to/uploaded-file-1686337729917.pdf",
+    "author": "sobujeeee",
+    "authorEmail": "hasan.softopark@gmail.com",
+    "authorPhoto": "https://kb-corporetion.s3.ap-southeast-1.amazonaws.com/download%20%281%29.jpg",
+    "bids": []
+  },
+  {
+    "_id": "6484665818bf45eb47d852e8"
+  }
+]
