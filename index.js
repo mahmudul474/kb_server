@@ -777,50 +777,23 @@ async function run() {
     });
 
     ///get my  win bids
-    app.get("/bids/bidder/:bidderId/products/won", async (req, res) => {
-      try {
-        const { bidderId } = req.params;
+  app.get("/my-wins", async (req, res) => {
+    try {
+      const userEmail = req.query.email; // Get the user's email from the query parameter
 
-        // Find all products where the bidder has the highest bid
-        const products = await productCollection
-          .aggregate([
-            {
-              $match: {
-                "bids.bidderId": bidderId
-              }
-            },
-            {
-              $unwind: "$bids"
-            },
-            {
-              $sort: {
-                "bids.amount": -1
-              }
-            },
-            {
-              $group: {
-                _id: "$_id",
-                product: { $first: "$$ROOT" },
-                highestBid: { $first: "$bids" }
-              }
-            },
-            {
-              $project: {
-                _id: "$product._id",
-                name: "$product.name",
-                description: "$product.description",
-                // Add other product fields you want to retrieve
-                highestBid: "$highestBid"
-              }
-            }
-          ])
-          .toArray();
+      // Find all products where the user is the winner
+      const winningProducts = await productCollection
+        .find({
+          "winner.bidderEmail": userEmail
+        })
+        .toArray();
 
-        res.status(200).json({ wonProducts: products });
-      } catch (error) {
-        res.status(500).json({ error: "Error retrieving won products" });
-      }
-    });
+      res.status(200).json({ winningProducts });
+    } catch (error) {
+      res.status(500).json({ error: "Error retrieving winning products" });
+    }
+  });
+
 
     ///get all winner
 
