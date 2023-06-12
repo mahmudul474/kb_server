@@ -64,6 +64,7 @@ async function run() {
     const productCollection = client.db("KB").collection("products");
     const hostRequestsCollection = client.db("KB").collection("hostRequests");
     const paymentColletion = client.db("KB").collection("payments");
+
     ///admin veryfy
 
     const verifyAdmin = async (req, res, next) => {
@@ -822,6 +823,53 @@ async function run() {
       }
     });
 
+    /// admin order  order
+
+    app.get("/orders", async (req, res) => {
+      const query = { order: "order" };
+      const result = await paymentColletion.find(query).toArray();
+      res.send(result);
+    });
+
+    //approve order
+    app.put("/payment/admin/order/approve/:id", async (req, res) => {
+      const id = req.params.id;
+      const winner = req.body;
+
+      console.log(id, "this is id from me an my site ");
+      console.log(winner);
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "approved"
+        }
+      };
+
+      const result = await paymentColletion.updateOne(filter, updateDoc);
+
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+      const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+      const day = String(currentDate.getDate()).padStart(2, "0");
+      const hours = String(currentDate.getHours()).padStart(2, "0");
+      const minutes = String(currentDate.getMinutes()).padStart(2, "0");
+
+      const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+      productCollection.updateOne(
+        { _id: new ObjectId(winner?.productId) },
+        {
+          $set: {
+            winner,
+            endBiddingTime: formattedDate,
+            payment: "approved",
+            status: "sold out"
+          }
+        }
+      );
+      res.send(result);
+    });
+
     /// payment
 
     //send payment dettails
@@ -908,13 +956,6 @@ async function run() {
       );
       res.send(result);
     });
-   
-
-
-
-
-
-
   } finally {
     // Ensures that the client will close when you finish/error
   }
