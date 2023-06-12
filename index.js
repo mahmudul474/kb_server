@@ -956,6 +956,19 @@ async function run() {
       );
       res.send(result);
     });
+
+     
+
+    ////get my  order
+    app.get("/my-orders", async (req, res) => {
+      const email = req.query.email;
+      const result = await paymentColletion.find({}).toArray();
+      console.log(result);
+      const orders = result.filter(
+        order => order.order === "order" && order?.bidderEmail === email
+      );
+      res.send(orders);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
   }
