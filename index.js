@@ -63,7 +63,7 @@ async function run() {
     const userCollection = client.db("KB").collection("users");
     const productCollection = client.db("KB").collection("products");
     const hostRequestsCollection = client.db("KB").collection("hostRequests");
-
+    const paymentColletion = client.db("KB").collection("payments");
     ///admin veryfy
 
     const verifyAdmin = async (req, res, next) => {
@@ -723,7 +723,7 @@ async function run() {
             // Set the winner in the product document
             await productCollection.updateOne(
               { _id: new ObjectId(productId) },
-              { $set: { winner } }
+              { $set: { winner, status: "pending" } }
             );
 
             // Send email to the winner
@@ -777,23 +777,22 @@ async function run() {
     });
 
     ///get my  win bids
-  app.get("/my-wins", async (req, res) => {
-    try {
-      const userEmail = req.query.email; // Get the user's email from the query parameter
+    app.get("/my-wins", async (req, res) => {
+      try {
+        const userEmail = req.query.email; // Get the user's email from the query parameter
 
-      // Find all products where the user is the winner
-      const winningProducts = await productCollection
-        .find({
-          "winner.bidderEmail": userEmail
-        })
-        .toArray();
+        // Find all products where the user is the winner
+        const winningProducts = await productCollection
+          .find({
+            "winner.bidderEmail": userEmail
+          })
+          .toArray();
 
-      res.status(200).json({ winningProducts });
-    } catch (error) {
-      res.status(500).json({ error: "Error retrieving winning products" });
-    }
-  });
-
+        res.send(winningProducts);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving winning products" });
+      }
+    });
 
     ///get all winner
 
@@ -822,6 +821,100 @@ async function run() {
         res.status(500).json({ error: "Error retrieving winners" });
       }
     });
+
+    /// payment
+
+    //send payment dettails
+
+    app.post("/payments/details/:id", async (req, res) => {
+      const id = req.params.id;
+      const details = req.body;
+      const result = await paymentColletion.insertOne(details);
+
+      productCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            payment: "pending"
+          }
+        }
+      );
+
+      res.send(result);
+    });
+
+    //get all   payment
+    app.get("/payments", async (req, res) => {
+      const result = await paymentColletion.find({}).toArray();
+      res.send(result);
+    });
+
+    ///get singel payment
+
+    app.get("/product/payment/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { productId: id };
+      const result = await paymentColletion.findOne(query, {
+        sort: { _id: -1 }
+      });
+      res.send(result);
+    });
+
+    //admin  aprove  payment
+
+    app.put("/payment/admin/approve/:id", async (req, res) => {
+      const id = req.params.id;
+      const paymentId = req.body;
+      const filter = { _id: new ObjectId(paymentId) };
+      const updateDoc = {
+        $set: {
+          status: "approved"
+        }
+      };
+
+      const result = await paymentColletion.updateOne(filter, updateDoc);
+      productCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            payment: "approved",
+            status: "sold out"
+          }
+        }
+      );
+      res.send(result);
+    });
+
+    ///handle fild   payment
+    app.put("/payment/admin/failed/:id", async (req, res) => {
+      const id = req.params.id;
+      const paymentId = req.body;
+      console.log(paymentId);
+      const filter = { _id: new ObjectId(paymentId) };
+      const updateDoc = {
+        $set: {
+          status: "failed"
+        }
+      };
+
+      const result = await paymentColletion.updateOne(filter, updateDoc);
+      productCollection.updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            payment: ""
+          }
+        }
+      );
+      res.send(result);
+    });
+   
+
+
+
+
+
+
   } finally {
     // Ensures that the client will close when you finish/error
   }
