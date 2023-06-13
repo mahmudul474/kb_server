@@ -210,7 +210,7 @@ async function run() {
       const id = req.params.id;
       const { phoneNumber, businessName, businessAddress, tinNum, tradeLN } =
         req.body;
-        console.log(req.body);
+      console.log(req.body);
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const uptadeDoc = {
@@ -593,7 +593,7 @@ async function run() {
         const formattedDate = futureDate.toISOString().slice(0, 16);
 
         const filteredProducts = products.filter(
-          product => product.startBiddingTime < formattedDate
+          product => product.startBiddingTime > formattedDate
         );
 
         res.send(filteredProducts);
@@ -602,13 +602,6 @@ async function run() {
       }
     });
 
-    //get singel product
-    app.get("/products/:id", async (req, res) => {
-      const productId = req.params.id;
-      const query = { _id: new ObjectId(productId) };
-      const result = await productCollection.findOne(query);
-      res.send(result);
-    });
     ///place bid
     app.post("/products/:productId/bids", async (req, res) => {
       try {
@@ -798,30 +791,12 @@ async function run() {
 
     ///get all winner
 
-    app.get("/bids/winners", async (req, res) => {
-      try {
-        const products = await productCollection.find({}).toArray();
-        const winners = [];
-
-        for (const product of products) {
-          if (product.bids.length > 0) {
-            const sortedBids = product.bids.sort((a, b) => b.amount - a.amount);
-            const highestBid = sortedBids[0];
-
-            winners.push({
-              productId: product._id,
-              productName: product.name,
-              winnerId: highestBid.bidderId,
-              winnerName: highestBid.bidderName,
-              winningAmount: highestBid.amount
-            });
-          }
-        }
-
-        res.status(200).json({ winners });
-      } catch (error) {
-        res.status(500).json({ error: "Error retrieving winners" });
-      }
+    app.get("/products/winners", async (req, res) => {
+      const winners = await productCollection
+        .find({ winner: { $exists: true } })
+        .project({ _id: 0, winner: 1 })
+        .toArray();
+      res.json(winners.map(({ winner }) => winner));
     });
 
     /// admin order  order
@@ -895,7 +870,8 @@ async function run() {
     //get all   payment
     app.get("/payments", async (req, res) => {
       const result = await paymentColletion.find({}).toArray();
-      res.send(result);
+      const payments = result.filter(payment => payment.status === "approved");
+      res.send(payments);
     });
 
     ///get singel payment
@@ -958,8 +934,6 @@ async function run() {
       res.send(result);
     });
 
-     
-
     ////get my  order
     app.get("/my-orders", async (req, res) => {
       const email = req.query.email;
@@ -969,6 +943,14 @@ async function run() {
         order => order.order === "order" && order?.bidderEmail === email
       );
       res.send(orders);
+    });
+
+    //get singel product
+    app.get("/products/:id", async (req, res) => {
+      const productId = req.params.id;
+      const query = { _id: new ObjectId(productId) };
+      const result = await productCollection.findOne(query);
+      res.send(result);
     });
   } finally {
     // Ensures that the client will close when you finish/error
