@@ -210,6 +210,7 @@ async function run() {
       const id = req.params.id;
       const { phoneNumber, businessName, businessAddress, tinNum, tradeLN } =
         req.body;
+        console.log(req.body);
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const uptadeDoc = {
