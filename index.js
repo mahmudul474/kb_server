@@ -679,7 +679,7 @@ async function run() {
       }
     });
 
-    ///koyel  bid p
+    ///koyel  bid place
     app.post("/products/:productId/koyel/bids", async (req, res) => {
       const { productId } = req.params;
       const koyelBids = req.body;
@@ -738,7 +738,7 @@ async function run() {
 
         // Update the product in the database
         await productCollection.updateOne(
-          { _id: ObjectId(productId) },
+          { _id: new ObjectId(productId) },
           { $set: product }
         );
 
@@ -822,6 +822,154 @@ async function run() {
         res.status(500).json({ error: "Error retrieving winner" });
       }
     });
+
+    //get koyel winner
+
+    app.get("/products/:productId/koyel/winner", async (req, res) => {
+      try {
+        const { productId } = req.params;
+
+        // Find the product by its ID in the database
+        const product = await productCollection.findOne({
+          _id: new ObjectId(productId)
+        });
+
+        if (!product) {
+          return res.status(404).json({ error: "Product not found" });
+        }
+
+        // Check if any koyel objects exist for the product
+        if (product.koyel.length === 0) {
+          return res
+            .status(400)
+            .json({ error: "No koyel objects found for the product" });
+        }
+
+        // Iterate through each koyel object and determine the winner
+        const winners = [];
+        for (const koyel of product.koyel) {
+          // Check if any bids exist for the koyel object
+          if (koyel.bids.length === 0) {
+            winners.push(null); // No winner found for this koyel object
+            continue; // Move on to the next koyel object
+          }
+
+          // Find the bid with the highest amount for the koyel object
+          const highestBid = koyel.bids.reduce((maxBid, bid) =>
+            bid.bidAmount > maxBid.bidAmount ? bid : maxBid
+          );
+
+          // Check if the current time is greater than the bidding end time
+          const currentTime = new Date().getTime();
+          const biddingEndTime = new Date(koyel.endBiddingTime).getTime();
+
+          if (currentTime >= biddingEndTime) {
+            // Bidding has ended, select the winner if not already selected
+            if (!koyel.winner) {
+              koyel.winner = highestBid;
+
+              // Optionally, send email to the winner here
+
+              // Save the updated koyel object in the product document
+              await productCollection.updateOne(
+                { _id: new ObjectId(productId) },
+                { $set: { koyel: product.koyel } }
+              );
+
+              winners.push(highestBid); // Add the winner to the winners array
+            } else {
+              winners.push(koyel.winner); // Winner already selected for this koyel object
+            }
+          } else {
+            winners.push(null); // Bidding is still ongoing for this koyel object
+          }
+        }
+
+        res.status(200).json({ winners });
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving winners" });
+      }
+    });
+
+    // app.get("/products/:productId/koyel/winner", async (req, res) => {
+    //   try {
+    //     const { productId } = req.params;
+
+    //     // Find the product by its ID in the database
+    //     const product = await productCollection.findOne({
+    //       _id: new ObjectId(productId)
+    //     });
+
+    //     if (!product) {
+    //       return res.status(404).json({ error: "Product not found" });
+    //     }
+
+    //     // Check if any koyel objects exist for the product
+    //     if (product.koyel.length === 0) {
+    //       return res
+    //         .status(400)
+    //         .json({ error: "No koyel objects found for the product" });
+    //     }
+
+    //     // Iterate through each koyel object and determine the winner
+    //     const winners = [];
+    //     for (const koyel of product.koyel) {
+    //       // Check if any bids exist for the koyel object
+    //       if (koyel.bids.length === 0) {
+    //         winners.push(null); // No winner found for this koyel object
+    //         continue; // Move on to the next koyel object
+    //       }
+
+    //       // Find the bid with the highest amount for the koyel object
+    //       const highestBid = koyel.bids.reduce((maxBid, bid) =>
+    //         bid.bidAmount > maxBid.bidAmount ? bid : maxBid
+    //       );
+
+    //       // Check if the current time is greater than the bidding end time
+    //       const currentTime = new Date().getTime();
+    //       const biddingEndTime = new Date(koyel.endBiddingTime).getTime();
+
+    //       if (currentTime >= biddingEndTime) {
+    //         // Bidding has ended, select the winner if not already selected
+    //         if (!koyel.winner) {
+    //           koyel.winner = highestBid;
+
+    //           // Send email to the winner
+    //           const mailOptions = {
+    //             from: "your-email@gmail.com",
+    //             to: highestBid.bidderEmail,
+    //             subject: "Congratulations! You won the bid!",
+    //             text: "Dear winner, congratulations on winning the bid. Please proceed with the payment process."
+    //           };
+
+    //           transporter.sendMail(mailOptions, (error, info) => {
+    //             if (error) {
+    //               console.error("Error sending email:", error);
+    //             } else {
+    //               console.log("Email sent:", info.response);
+    //             }
+    //           });
+
+    //           // Save the updated koyel object in the product document
+    //           await productCollection.updateOne(
+    //             { _id: new ObjectId(productId) },
+    //             { $set: { koyel: product.koyel } }
+    //           );
+
+    //           winners.push(highestBid); // Add the winner to the winners array
+    //         } else {
+    //           winners.push(koyel.winner); // Winner already selected for this koyel object
+    //         }
+    //       } else {
+    //         winners.push(null); // Bidding is still ongoing for this koyel object
+    //       }
+    //     }
+
+    //     res.status(200).json({ winners });
+    //   } catch (error) {
+    //     res.status(500).json({ error: "Error retrieving winners" });
+    //   }
+    // });
 
     //get my all bids
     app.get("/bids/bidder/:bidderId/products", async (req, res) => {
