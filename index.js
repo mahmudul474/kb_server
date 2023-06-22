@@ -679,6 +679,76 @@ async function run() {
       }
     });
 
+    ///koyel  bid p
+    app.post("/products/:productId/koyel/bids", async (req, res) => {
+      const { productId } = req.params;
+      const koyelBids = req.body;
+
+      try {
+        // Find the product by ID
+        const product = await productCollection.findOne({
+          _id: new ObjectId(productId)
+        });
+
+        if (!product) {
+          return res.status(404).json({ error: "Product not found" });
+        }
+
+        // Iterate through each koyel bid data
+        koyelBids.forEach(async koyelBid => {
+          const {
+            koyelId,
+            bidAmount,
+            bidderName,
+            bidderEmail,
+            bidderId,
+            bidderPhoto
+          } = koyelBid;
+
+          // Find the koyel object by ID
+          const koyel = product.koyel.find(koyel => koyel._id === koyelId);
+
+          if (!koyel) {
+            return res
+              .status(404)
+              .json({ error: `Koyel object with ID ${koyelId} not found` });
+          }
+
+          // Check if the bid already exists for the koyel object
+          const existingBid = koyel.bids.find(bid => bid.bidderId === bidderId);
+
+          if (existingBid) {
+            return res.status(400).json({
+              error: `Bidder with ID ${bidderId} has already placed a bid for this koyel object`
+            });
+          }
+
+          // Create a new bid object
+          const newBid = {
+            bidAmount,
+            bidderName,
+            bidderEmail,
+            bidderId,
+            bidderPhoto
+          };
+
+          // Add the new bid to the koyel object's bids array
+          koyel.bids.push(newBid);
+        });
+
+        // Update the product in the database
+        await productCollection.updateOne(
+          { _id: ObjectId(productId) },
+          { $set: product }
+        );
+
+        return res.json({ message: "Bids placed successfully" });
+      } catch (error) {
+        console.error("Error placing bids:", error);
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
+
     //get winner
 
     app.get("/products/:productId/winner", async (req, res) => {
