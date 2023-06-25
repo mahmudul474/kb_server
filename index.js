@@ -682,7 +682,7 @@ async function run() {
     ///koyel  bid place
     app.post("/products/:productId/koyel/bids", async (req, res) => {
       const { productId } = req.params;
-      const koyelBids = req.body;
+      const { koyelBids, bidder } = req.body;
 
       try {
         // Find the product by ID
@@ -702,7 +702,8 @@ async function run() {
             bidderName,
             bidderEmail,
             bidderId,
-            bidderPhoto
+            bidderPhoto,
+            bidderNumber
           } = koyelBid;
 
           // Find the koyel object by ID
@@ -714,27 +715,31 @@ async function run() {
               .json({ error: `Koyel object with ID ${koyelId} not found` });
           }
 
-          // Check if the bid already exists for the koyel object
-          const existingBid = koyel.bids.find(bid => bid.bidderId === bidderId);
-
-          if (existingBid) {
-            return res.status(400).json({
-              error: `Bidder with ID ${bidderId} has already placed a bid for this koyel object`
-            });
-          }
-
           // Create a new bid object
           const newBid = {
             bidAmount,
             bidderName,
             bidderEmail,
             bidderId,
-            bidderPhoto
+            bidderPhoto,
+            bidderNumber
           };
 
           // Add the new bid to the koyel object's bids array
           koyel.bids.push(newBid);
         });
+
+        const bids = {
+          bidderName: bidder?.bidderName,
+          bidderEmail: bidder?.bidderEmail,
+          bidderId: bidder?.bidderId,
+          bidAmount: bidder?.bidAmount,
+          bidderPhoto: bidder?.bidderPhoto,
+          bidderNumber: bidder?.bidderNumber,
+          item: koyelBids
+        };
+
+        product.bids.push(bids);
 
         // Update the product in the database
         await productCollection.updateOne(
@@ -742,15 +747,45 @@ async function run() {
           { $set: product }
         );
 
-        return res.json({ message: "Bids placed successfully" });
+        return res.json({
+          message: "Bids placed successfully"
+        });
       } catch (error) {
         console.error("Error placing bids:", error);
         return res.status(500).json({ error: "Internal Server Error" });
       }
     });
 
-    //get winner
+    //get koyel bids
+    // app.get("/products/:productId/koyel/bids", async (req, res) => {
+    //   try {
+    //     const { productId } = req.params;
 
+    //     // Find the product by its ID in the database
+    //     const product = await productCollection.findOne({
+    //       _id: new ObjectId(productId)
+    //     });
+
+    //     if (!product) {
+    //       return res.status(404).json({ error: "Product not found" });
+    //     }
+
+    //     // Create an array to store the bids for each koyel object
+    //     const bids = [];
+
+    //     // Iterate through each koyel object and retrieve the bids
+    //     for (const koyel of product.koyel) {
+    //       const koyelBids = koyel.bids;
+    //       bids.push(koyelBids);
+    //     }
+
+    //     res.status(200).json({ bids });
+    //   } catch (error) {
+    //     res.status(500).json({ error: "Error retrieving bids" });
+    //   }
+    // });
+
+    //get winner
     app.get("/products/:productId/winner", async (req, res) => {
       try {
         const { productId } = req.params;
@@ -972,6 +1007,7 @@ async function run() {
     // });
 
     //get my all bids
+
     app.get("/bids/bidder/:bidderId/products", async (req, res) => {
       try {
         const { bidderId } = req.params;
