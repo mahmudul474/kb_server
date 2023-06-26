@@ -62,6 +62,7 @@ async function run() {
   try {
     const userCollection = client.db("KB").collection("users");
     const productCollection = client.db("KB").collection("products");
+    const koyelCollection = client.db("KB").collection("koyel");
     const hostRequestsCollection = client.db("KB").collection("hostRequests");
     const paymentColletion = client.db("KB").collection("payments");
 
@@ -396,10 +397,29 @@ async function run() {
         res.status(500).json({ message: "  product not  upload " });
       }
     });
+    ///upload   product koyel
+    app.post("/products/upload/koyel", async (req, res) => {
+      try {
+        const product = req.body;
+
+        // Insert the product into the product collection
+        await koyelCollection.insertOne(product);
+
+        // Send success message
+        res.status(200).json({ message: "Product  upload  successfully" });
+      } catch (error) {
+        // Send error message
+        res.status(500).json({ message: "  product not  upload " });
+      }
+    });
 
     // get all  product
     app.get("/products", async (req, res) => {
       const result = await productCollection.find({}).toArray();
+      res.send(result);
+    });
+    app.get("/products/koyel", async (req, res) => {
+      const result = await koyelCollection.find({}).toArray();
       res.send(result);
     });
 
@@ -476,30 +496,7 @@ async function run() {
       }
     });
 
-    //check  kore dekte paro
-
-    // app.get("/products/with-bids", async (req, res) => {
-    //   try {
-    //     const currentDate = new Date();
-    //     const year = currentDate.getFullYear();
-    //     const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-    //     const day = String(currentDate.getDate()).padStart(2, "0");
-    //     const hours = String(currentDate.getHours()).padStart(2, "0");
-    //     const minutes = String(currentDate.getMinutes()).padStart(2, "0");
-
-    //     const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-    //     // Find all products that have bids
-    //     const products = await productCollection
-    //       .find({ bids: { $exists: true, $not: { $size: 0 } } })
-    //       .toArray();
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving products" });
-    //   }
-    // });
-
-    //bidding end but never bid
-
+    //end bidding with out bid
     app.get("/products/no-bids-end-time", async (req, res) => {
       try {
         const currentDate = new Date();
@@ -523,6 +520,58 @@ async function run() {
         );
 
         res.send(result);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving products" });
+      }
+    });
+
+    ////today  end bidding
+    app.get("/products/bidding-end-today", async (req, res) => {
+      try {
+        // Retrieve the current date/time
+        const currentDate = new Date();
+        const today = currentDate.toISOString().slice(0, 16);
+
+        // Calculate the end date/time for 24 hours from now
+        const futureDate = new Date(
+          currentDate.getTime() + 24 * 60 * 60 * 1000
+        );
+        const formattedDate = futureDate.toISOString().slice(0, 16);
+
+        console.log(formattedDate);
+
+        // Find products with bidding ending within the next 24 hours
+        const filteredProducts = await productCollection
+          .find({
+            endBiddingTime: { $gt: today, $lt: formattedDate }
+          })
+          .toArray();
+
+        res.send(filteredProducts);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving products" });
+      }
+    });
+
+    app.get("/products/bidding-end-less-than-24-hours", async (req, res) => {
+      try {
+        // Retrieve the current date/time
+        const currentDate = new Date();
+
+        // Calculate the end date/time for 24 hours from now
+        const futureDate = new Date(
+          currentDate.getTime() + 24 * 60 * 60 * 1000
+        );
+        console.log(futureDate);
+
+        // Find products with endBiddingTime less than 24 hours from now
+        const filteredProducts = await productCollection
+          .find({
+            endBiddingTime: { $lt: futureDate }
+          })
+          .toArray();
+
+        res.send(filteredProducts);
       } catch (error) {
         res.status(500).json({ error: "Error retrieving products" });
       }
@@ -588,9 +637,15 @@ async function run() {
         const products = await productCollection.find({}).toArray();
 
         const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+        const day = String(currentDate.getDate()).padStart(2, "0");
+        const hours = String(currentDate.getHours()).padStart(2, "0");
+        const minutes = String(currentDate.getMinutes()).padStart(2, "0");
 
-        const futureDate = new Date(currentDate.setDate(currentDate.getDate()));
-        const formattedDate = futureDate.toISOString().slice(0, 16);
+        const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        
 
         const filteredProducts = products.filter(
           product => product.startBiddingTime > formattedDate
