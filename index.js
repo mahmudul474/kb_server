@@ -1536,7 +1536,7 @@ async function run() {
 
     ///appove  payment
     app.put(
-      "/product/:productId/koyel-item/payment/:bidderId",
+      "/product/:productId/koyel-item/payment/approve/:bidderId",
       async (req, res) => {
         const productId = req.params.productId;
         const bidderId = req.params.bidderId;
@@ -1553,23 +1553,16 @@ async function run() {
           { $set: { status: "approve" } }
         );
 
-
- 
-
         const product = await koyelCollection.findOne({
           _id: new ObjectId(productId)
         });
-      
 
-        
-          
-        
         ///uptadekoyelItem
         for (const item of itemId) {
           const { koyelId } = item;
 
           const koyelItem = product.koyel.find(item => item._id === koyelId);
-           console.log(koyelItem);
+          console.log(koyelItem);
           if (!koyelItem) {
             return res
               .status(404)
@@ -1585,14 +1578,69 @@ async function run() {
           { $set: { koyel: product.koyel } }
         );
 
-        res.send({message:"product  updated successfully"})
+        res.send({ message: "product  updated successfully" });
       }
     );
 
 
- 
+    ////koyuel item pament faild
+    app.put(
+      "/product/:productId/koyel-item/payment/approve/:bidderId",
+      async (req, res) => {
+        const productId = req.params.productId;
+        const bidderId = req.params.bidderId;
+        const { itemId } = req.body;
+        const payment = await koyelitempaymentColletion.findOne(
+          {
+            productID: productId,
+            bidderId: bidderId
+          },
+          { sort: { _id: -1 } }
+        );
+        await koyelitempaymentColletion.updateOne(
+          { _id: payment?._id },
+          { $set: { status: "approve" } }
+        );
+
+        const product = await koyelCollection.findOne({
+          _id: new ObjectId(productId)
+        });
+
+        ///uptadekoyelItem
+        for (const item of itemId) {
+          const { koyelId } = item;
+
+          const koyelItem = product.koyel.find(item => item._id === koyelId);
+          console.log(koyelItem);
+          if (!koyelItem) {
+            return res
+              .status(404)
+              .json({ error: `Koyel object with ID ${koyelId} not found` });
+          }
+
+          koyelItem.payment = "";
+          koyelItem.status = "";
+        }
+
+        await koyelCollection.updateOne(
+          { _id: new ObjectId(productId) },
+          { $set: { koyel: product.koyel } }
+        );
+
+        res.send({ message: "product  updated successfully" });
+      }
+    );
 
 
+  ///get all approver payment in a single  product 
+  app.get("/products/approved/:productId", async (req, res) => {
+    const productId = req.params.productId;
+    const approvedProducts = await koyelitempaymentColletion
+      .find({ productID: productId, status: "approve" })
+      .toArray();
+    console.log(approvedProducts);
+    res.json(approvedProducts);
+  });
 
 
 
