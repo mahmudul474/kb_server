@@ -1582,6 +1582,55 @@ async function run() {
       }
     );
 
+    ///apovro buy now payment
+    app.put(
+      "/product/:productId/koyel-item/payment/approve/winner/:bidderId",
+      async (req, res) => {
+        const productId = req.params.productId;
+        const bidderId = req.params.bidderId;
+        const { itemId, paymentDetails } = req.body;
+
+        const payment = await koyelitempaymentColletion.findOne(
+          {
+            productID: productId,
+            bidderId: bidderId
+          },
+          { sort: { _id: -1 } }
+        );
+
+        await koyelitempaymentColletion.updateOne(
+          { _id: payment?._id },
+          { $set: { status: "approve" } }
+        );
+
+        const product = await koyelCollection.findOne({
+          _id: new ObjectId(productId)
+        });
+
+        ///uptadekoyelItem
+        for (const items of itemId) {
+          const { koyelId, item } = items;
+
+          const koyelItem = product.koyel.find(item => item._id === koyelId);
+
+          if (!koyelItem) {
+            return res
+              .status(404)
+              .json({ error: `Koyel object with ID ${koyelId} not found` });
+          }
+
+          koyelItem.payment = "approve";
+          koyelItem.status = "sold-out";
+        }
+
+        await koyelCollection.updateOne(
+          { _id: new ObjectId(productId) },
+          { $set: { koyel: product.koyel } }
+        );
+
+        res.send({ message: "product  updated successfully" });
+      }
+    );
 
     ////koyuel item pament faild
     app.put(
@@ -1631,19 +1680,110 @@ async function run() {
       }
     );
 
+    ///get all approver payment in a single  product
+    app.get("/products/approved/:productId", async (req, res) => {
+      const productId = req.params.productId;
+      const approvedProducts = await koyelitempaymentColletion
+        .find({ productID: productId, status: "approve" })
+        .toArray();
+      console.log(approvedProducts);
+      res.json(approvedProducts);
+    });
 
-  ///get all approver payment in a single  product 
-  app.get("/products/approved/:productId", async (req, res) => {
-    const productId = req.params.productId;
-    const approvedProducts = await koyelitempaymentColletion
-      .find({ productID: productId, status: "approve" })
-      .toArray();
-    console.log(approvedProducts);
-    res.json(approvedProducts);
-  });
+    /////post  koyel item  a order
 
+    app.post("/product/koyel-item/order/:id", async (req, res) => {
+      const productId = req.params.id;
+      const { paymentDetails, items } = req.body;
 
+      const {
+        transaction,
+        bankSleep,
+        amount,
+        branch,
+        bank,
+        bidderName,
+        bidderId,
+        bidderEmail,
+        bidderNumber,
+        bidderPhoto
+      } = paymentDetails;
 
+      ///post  order
+      const payment = {
+        paymentDetails,
+        productID: productId,
+        bidderId: paymentDetails?.bidderId,
+        koyel: items,
+        status: "pending",
+        order: "order"
+      };
+      await koyelitempaymentColletion.insertOne(payment);
+
+      try {
+        //   // // Find the product by ID
+        const product = await koyelCollection.findOne({
+          _id: new ObjectId(productId)
+        });
+
+        if (!product) {
+          return res.status(404).json({ error: "Product not found" });
+        }
+        // Iterate through each koyel bid data
+        items.forEach(async koyelBid => {
+          const { koyelId, koyel } = koyelBid;
+          // Find the koyel object by ID
+          const koyelitem = product.koyel.find(koyel => koyel._id === koyelId);
+          if (!koyelitem) {
+            return res
+              .status(404)
+              .json({ error: `Koyel object with ID ${koyelId} not found` });
+          }
+
+          // Create a new bid object
+          const newBid = {
+            bidAmount: items.length / amount,
+            bidderName,
+            bidderEmail,
+            bidderId,
+            bidderPhoto,
+            bidderNumber,
+            koyelId,
+            minimumBid: koyel?.minimumBid,
+            currentBid: koyel?.currentBid,
+            item: koyel?.item,
+            spec: koyel?.spec,
+            Thickness: koyel?.Thickness,
+            Width: koyel?.Width,
+            weight: koyel?.weight,
+            TS: koyel?.TS,
+            YP: koyel?.YP,
+            EL: koyel?.EL
+          };
+          // //Add the new bid to the koyel object's bids array
+          koyelitem.bids.push(newBid);
+        });
+        // Update the product in the database
+        await koyelCollection.updateOne(
+          { _id: new ObjectId(productId) },
+          { $set: product }
+        );
+        return res.json({
+          message: "Bids placed successfully"
+        });
+      } catch (error) {
+        console.error("Error placing bids:", error);
+        return res.status(500).json({ error: "Internal Server Error" });
+      }
+    });
+
+    ///get all koil item order
+
+    app.get("/product/koyel-item/order", async (req, res) => {
+      const query = { order: "order" };
+      const orders = await koyelitempaymentColletion.find(query).toArray();
+      res.send(orders);
+    });
   } finally {
     // Ensures that the client will close when you finish/error
   }
