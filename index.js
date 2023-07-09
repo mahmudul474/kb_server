@@ -1619,8 +1619,35 @@ async function run() {
               .json({ error: `Koyel object with ID ${koyelId} not found` });
           }
 
+          console.log(item);
+
+          const winner = {
+            bidAmount: paymentDetails?.amount / itemId?.length,
+
+            bidderName: paymentDetails?.bidderName,
+
+            bidderEmail: paymentDetails?.bidderEmail,
+
+            bidderId: paymentDetails?.bidderId,
+
+            bidderPhoto: paymentDetails?.bidderPhoto,
+            bidderNumber: paymentDetails?.bidderNumber,
+            koyelId,
+            item: item?.koyel.item,
+            spec: item?.koyel.spec,
+            Thickness: item?.koyel.Thickness,
+            Width: item?.koyel.Width,
+            weight: item?.koyel.weight,
+            TS: item?.koyel.TS,
+            YP: item?.koyel.YP,
+            EL: item?.koyel.EL
+          };
+
+          console.log(paymentDetails);
+
           koyelItem.payment = "approve";
           koyelItem.status = "sold-out";
+          koyelItem.winner = winner;
         }
 
         await koyelCollection.updateOne(
