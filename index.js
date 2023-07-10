@@ -671,6 +671,8 @@ async function run() {
         const biddingEndTime = new Date(product.endBiddingTime).getTime();
         if (currentTime > biddingEndTime) {
           return res.status(400).json({ error: "Bidding has ended" });
+        }else if(product.status==="sold-out"){
+             return res.status(400).json({ error: "product sold-out " });
         }
 
         // Check if bid amount is greater than the current highest bid
@@ -829,9 +831,7 @@ async function run() {
         res.status(500).json({ error: "Error retrieving winning products" });
       }
     });
-
     ///get all winner
-
     app.get("/products/winners", async (req, res) => {
       const winners = await productCollection
         .find({ winner: { $exists: true } })
@@ -839,15 +839,12 @@ async function run() {
         .toArray();
       res.json(winners.map(({ winner }) => winner));
     });
-
     /// admin order  order
-
     app.get("/orders", async (req, res) => {
       const query = { order: "order" };
       const result = await paymentColletion.find(query).toArray();
       res.send(result);
     });
-
     //approve order
     app.put("/payment/admin/order/approve/:id", async (req, res) => {
       const id = req.params.id;
@@ -880,17 +877,14 @@ async function run() {
             winner,
             endBiddingTime: formattedDate,
             payment: "approved",
-            status: "sold out"
+            status: "sold-out"
           }
         }
       );
       res.send(result);
     });
-
     /// payment
-
     //send payment dettails
-
     app.post("/payments/details/:id", async (req, res) => {
       const id = req.params.id;
       const details = req.body;
@@ -907,9 +901,7 @@ async function run() {
 
       res.send(result);
     });
-
     //admin  aprove  payment
-
     app.put("/payment/admin/approve/:id", async (req, res) => {
       const id = req.params.id;
       const paymentId = req.body;
@@ -932,7 +924,6 @@ async function run() {
       );
       res.send(result);
     });
-
     ///handle fild   payment
     app.put("/payment/admin/failed/:id", async (req, res) => {
       const id = req.params.id;
@@ -956,16 +947,13 @@ async function run() {
       );
       res.send(result);
     });
-
     //get all   payment
     app.get("/payments", async (req, res) => {
       const result = await paymentColletion.find({}).toArray();
       const payments = result.filter(payment => payment.status === "approved");
       res.send(payments);
     });
-
     ///get singel payment
-
     app.get("/product/payment/:id", async (req, res) => {
       const id = req.params.id;
       const query = { productId: id };
@@ -974,7 +962,6 @@ async function run() {
       });
       res.send(result);
     });
-
     ////get my  order
     app.get("/my-orders", async (req, res) => {
       const email = req.query.email;
@@ -1618,8 +1605,6 @@ async function run() {
               .status(404)
               .json({ error: `Koyel object with ID ${koyelId} not found` });
           }
-
-          console.log(item);
 
           const winner = {
             bidAmount: paymentDetails?.amount / itemId?.length,
