@@ -1047,6 +1047,15 @@ async function run() {
           return res.status(404).json({ error: "Product not found" });
         }
 
+        // Check if bidding is still open
+        const currentTime = new Date().getTime();
+        const biddingEndTime = new Date(product.endBiddingTime).getTime();
+        if (currentTime > biddingEndTime) {
+          return res.status(400).json({ error: "Bidding has ended" });
+        } else if (product.status === "sold-out") {
+          return res.status(400).json({ error: "product sold-out " });
+        }
+
         // Iterate through each koyel bid data
         koyelBids.forEach(async koyelBid => {
           const {
@@ -1405,6 +1414,49 @@ async function run() {
       const result = await productCollection.findOne(query);
       res.send(result);
     });
+
+    ///my bidss
+    app.get("/my-bids/:userId/koyel-test", async (req, res) => {
+      try {
+        const userId = req.params.userId; // Get the user ID from the route parameter
+        const userEmail = req.query.email; // Get the client email from the query parameter
+
+        // Find the user's bids based on the provided user ID and email
+        const userBids = await koyelCollection
+          .aggregate([
+            {
+              $match: {
+                "bids.bidderId": userId,
+                "bids.bidderEmail": userEmail
+              }
+            },
+            {
+              $project: {
+                bids: {
+                  $filter: {
+                    input: "$bids",
+                    as: "bid",
+                    cond: {
+                      $and: [
+                        { $eq: ["$$bid.bidderId", userId] },
+                        { $eq: ["$$bid.bidderEmail", userEmail] }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          ])
+          .toArray();
+
+        res.send(userBids);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving user bids" });
+      }
+    });
+
+
+
 
     ////get  my win
     app.get("/my-wins/:userId/koyel", async (req, res) => {
