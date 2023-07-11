@@ -671,8 +671,8 @@ async function run() {
         const biddingEndTime = new Date(product.endBiddingTime).getTime();
         if (currentTime > biddingEndTime) {
           return res.status(400).json({ error: "Bidding has ended" });
-        }else if(product.status==="sold-out"){
-             return res.status(400).json({ error: "product sold-out " });
+        } else if (product.status === "sold-out") {
+          return res.status(400).json({ error: "product sold-out " });
         }
 
         // Check if bid amount is greater than the current highest bid
@@ -1415,49 +1415,6 @@ async function run() {
       res.send(result);
     });
 
-    ///my bidss
-    app.get("/my-bids/:userId/koyel-test", async (req, res) => {
-      try {
-        const userId = req.params.userId; // Get the user ID from the route parameter
-        const userEmail = req.query.email; // Get the client email from the query parameter
-
-        // Find the user's bids based on the provided user ID and email
-        const userBids = await koyelCollection
-          .aggregate([
-            {
-              $match: {
-                "bids.bidderId": userId,
-                "bids.bidderEmail": userEmail
-              }
-            },
-            {
-              $project: {
-                bids: {
-                  $filter: {
-                    input: "$bids",
-                    as: "bid",
-                    cond: {
-                      $and: [
-                        { $eq: ["$$bid.bidderId", userId] },
-                        { $eq: ["$$bid.bidderEmail", userEmail] }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          ])
-          .toArray();
-
-        res.send(userBids);
-      } catch (error) {
-        res.status(500).json({ error: "Error retrieving user bids" });
-      }
-    });
-
-
-
-
     ////get  my win
     app.get("/my-wins/:userId/koyel", async (req, res) => {
       try {
@@ -1565,6 +1522,25 @@ async function run() {
 
       res.json({ payment, message: "Payment details updated successfully" });
     });
+
+    /// get my koyel item  payment
+    app.get(
+      "/product/:productId/koyel-item/status/:bidderId",
+      async (req, res) => {
+        const productId = req.params.productId;
+        const bidderId = req.params.bidderId;
+        const payment = await koyelitempaymentColletion.findOne(
+          {
+            productID: productId,
+            bidderId: bidderId
+          },
+          { sort: { _id: -1 }, projection: { status: 1 } }
+        );
+        const status = payment ? payment.status : null;
+        res.send({ status });
+      }
+    );
+
     ///get  koyel item payment request payment
     app.get("/product/koyel-item/payment/:id", async (req, res) => {
       const id = req.params.id;
