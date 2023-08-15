@@ -194,7 +194,6 @@ async function run() {
       const decodedEmail = req.decoded.email;
       const query = { email: decodedEmail };
       const user = await userCollection.findOne(query);
-
       if (user.role !== "admin") {
         return res.status(403).send({ message: "forbidden acces" });
       }
@@ -588,6 +587,7 @@ async function run() {
         res.status(500).json({ error: "Error retrieving products" });
       }
     });
+
     //end month
     app.get("/products/bidding-end-month", async (req, res) => {
       try {
@@ -741,7 +741,6 @@ async function run() {
             .status(400)
             .json({ error: "No bids found for the product" });
         }
-
         // Find the bid with the highest amount
         const highestBid = product.bids.reduce((maxBid, bid) =>
           bid.amount > maxBid.amount ? bid : maxBid
@@ -995,6 +994,137 @@ async function run() {
     app.get("/products/koyel", async (req, res) => {
       const result = await koyelCollection.find({}).toArray();
       res.send(result);
+    });
+
+    ////today  end bidding
+    app.get("/products/bidding-end-today", async (req, res) => {
+      try {
+        // Retrieve the current date/time
+        const currentDate = new Date();
+        const today = currentDate.toISOString().slice(0, 16);
+
+        // Calculate the end date/time for 24 hours from now
+        const futureDate = new Date(
+          currentDate.getTime() + 24 * 60 * 60 * 1000
+        );
+        const formattedDate = futureDate.toISOString().slice(0, 16);
+
+        console.log(formattedDate);
+
+        // Find products with bidding ending within the next 24 hours
+        const filteredProducts = await productCollection
+          .find({
+            endBiddingTime: { $gt: today, $lt: formattedDate }
+          })
+          .toArray();
+
+        res.send(filteredProducts);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving products" });
+      }
+    });
+
+    app.get("/products/bidding-end-less-than-24-hours", async (req, res) => {
+      try {
+        // Retrieve the current date/time
+        const currentDate = new Date();
+
+        // Calculate the end date/time for 24 hours from now
+        const futureDate = new Date(
+          currentDate.getTime() + 24 * 60 * 60 * 1000
+        );
+        console.log(futureDate);
+
+        // Find products with endBiddingTime less than 24 hours from now
+        const filteredProducts = await productCollection
+          .find({
+            endBiddingTime: { $lt: futureDate }
+          })
+          .toArray();
+
+        res.send(filteredProducts);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving products" });
+      }
+    });
+
+    //wekly end  bit
+    app.get("/products/item/bidding-end-week", async (req, res) => {
+      try {
+        // Retrieve the current date/time
+        const products = await koyelCollection.find({}).toArray();
+
+        const currentDate = new Date();
+        const today = currentDate.toISOString().slice(0, 16);
+        const futureDate = new Date(
+          currentDate.setDate(currentDate.getDate() + 7)
+        );
+        const formattedDate = futureDate.toISOString().slice(0, 16);
+
+        const filteredProducts = products.filter(
+          product =>
+            product.endBiddingTime < formattedDate &&
+            product.endBiddingTime > today
+        );
+
+        res.send(filteredProducts);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving products" });
+      }
+    });
+
+    //end month
+    app.get("/products/item/bidding-end-month", async (req, res) => {
+      try {
+        // Retrieve the current date/time
+        const products = await koyelCollection.find({}).toArray();
+
+        const currentDate = new Date();
+
+        const sevenDay = new Date(
+          currentDate.setDate(currentDate.getDate() + 7)
+        );
+        const biggethenSeven = sevenDay.toISOString().slice(0, 16);
+
+        const futureDate = new Date(
+          currentDate.setDate(currentDate.getDate() + 30)
+        );
+        const formattedDate = futureDate.toISOString().slice(0, 16);
+
+        const filteredProducts = products.filter(
+          product =>
+            product.endBiddingTime < formattedDate &&
+            product.endBiddingTime > biggethenSeven
+        );
+
+        res.send(filteredProducts);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving products" });
+      }
+    });
+    //upcomming
+    app.get("/products/item/upcoming", async (req, res) => {
+      try {
+        // Retrieve the current date/time
+        const products = await productCollection.find({}).toArray();
+
+        const currentDate = new Date();
+        const year = currentDate.getFullYear();
+        const month = String(currentDate.getMonth() + 1).padStart(2, "0");
+        const day = String(currentDate.getDate()).padStart(2, "0");
+        const hours = String(currentDate.getHours()).padStart(2, "0");
+        const minutes = String(currentDate.getMinutes()).padStart(2, "0");
+
+        const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        const filteredProducts = products.filter(
+          product => product.startBiddingTime > formattedDate
+        );
+
+        res.send(filteredProducts);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving products" });
+      }
     });
 
     ///bid close with  bidding
@@ -1597,6 +1727,69 @@ async function run() {
       }
     );
 
+    ///fiald payment koyel ite,
+    app.put(
+      "/product/:productId/koyel-item/payment/Failed/:bidderId",
+      async (req, res) => {
+        const productId = req.params.productId;
+        const bidderId = req.params.bidderId;
+        const { itemId } = req.body;
+        const payment = await koyelitempaymentColletion.findOne(
+          {
+            productID: productId,
+            bidderId: bidderId
+          },
+          { sort: { _id: -1 } }
+        );
+        await koyelitempaymentColletion.updateOne(
+          { _id: payment?._id },
+          { $set: { status: "" } }
+        );
+
+        const product = await koyelCollection.findOne({
+          _id: new ObjectId(productId)
+        });
+
+        ///uptadekoyelItem
+        for (const item of itemId) {
+          const { koyelId } = item;
+
+          const koyelItem = product.koyel.find(item => item._id === koyelId);
+          console.log(koyelItem);
+          if (!koyelItem) {
+            return res
+              .status(404)
+              .json({ error: `Koyel object with ID ${koyelId} not found` });
+          }
+
+          koyelItem.payment = "";
+          koyelItem.status = "s";
+        }
+
+        await koyelCollection.updateOne(
+          { _id: new ObjectId(productId) },
+          { $set: { koyel: product.koyel } }
+        );
+
+        res.send({ message: "product  updated successfully" });
+      }
+    );
+
+    /// get my    koyel  item buy product
+    /// get my koyel item  payment
+    app.get("/product/koyel-item/:bidderId/order", async (req, res) => {
+      const productId = req.params.productId;
+      const bidderId = req.params.bidderId;
+      const orders = await koyelitempaymentColletion
+        .find({
+          bidderId: bidderId,
+          order: "order"
+        })
+        .toArray();
+
+      res.send(orders);
+    });
+
     ///apovro buy now payment
     app.put(
       "/product/:productId/koyel-item/payment/approve/winner/:bidderId",
@@ -1823,6 +2016,23 @@ async function run() {
       const query = { order: "order" };
       const orders = await koyelitempaymentColletion.find(query).toArray();
       res.send(orders);
+    });
+
+    /////get my payment history
+    app.get("/my-payment-history/koyelitempayment/:id", async (req, res) => {
+      const bidderId = req.params.id;
+      const history = await koyelitempaymentColletion
+        .find({ bidderId: bidderId })
+        .toArray();
+      res.send(history);
+    });
+    ///get inteck product payment history
+    app.get("/my-payment-history/product/:id", async (req, res) => {
+      const bidderId = req.params.id;
+      const history = await paymentColletion
+        .find({ bidderId: bidderId })
+        .toArray();
+      res.send(history);
     });
   } finally {
     // Ensures that the client will close when you finish/error
