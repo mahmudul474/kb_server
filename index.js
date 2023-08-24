@@ -1081,6 +1081,9 @@ async function run() {
           bidderPhoto: bidder?.bidderPhoto,
           bidderNumber: bidder?.bidderNumber,
           item: koyelBids,
+          expectedDate,
+          landing,
+          shipmentType
         };
 
         product.bids.push(bids);
