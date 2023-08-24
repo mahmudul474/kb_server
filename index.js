@@ -16,8 +16,8 @@ const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: "mdmahmudulla474@gmail.com",
-    pass: "pfnnszixydqzfkhz"
-  }
+    pass: "pfnnszixydqzfkhz",
+  },
 });
 
 ///midleWere
@@ -57,8 +57,8 @@ const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
-    deprecationErrors: true
-  }
+    deprecationErrors: true,
+  },
 });
 
 async function run() {
@@ -106,7 +106,7 @@ async function run() {
           const user = req.body;
 
           const existingUser = await userCollection.findOne({
-            email: user.email
+            email: user.email,
           });
 
           if (existingUser) {
@@ -156,8 +156,8 @@ async function run() {
         $set: {
           name: info.name,
           phoneNumber: info?.phoneNumber,
-          userPhoto: info?.userPhoto
-        }
+          userPhoto: info?.userPhoto,
+        },
       };
 
       const result = await userCollection.updateOne(filter, updateDoc, options);
@@ -170,7 +170,7 @@ async function run() {
       const user = await userCollection.findOne(query);
       if (user) {
         const token = jwt.sign({ email }, process.env.JWT_ACCESS_TOKEN, {
-          expiresIn: "1d"
+          expiresIn: "1d",
         });
 
         return res.send({ accessToken: token });
@@ -184,7 +184,7 @@ async function run() {
     app.get("/users", async (req, res) => {
       const email = req.query.email;
       const users = await userCollection.find({}).toArray();
-      const result = users.filter(user => user.email !== email);
+      const result = users.filter((user) => user.email !== email);
       res.send(result);
     });
 
@@ -203,8 +203,8 @@ async function run() {
       const option = { upsert: true };
       const updateDoc = {
         $set: {
-          role: "admin"
-        }
+          role: "admin",
+        },
       };
       const result = await userCollection.updateOne(filter, updateDoc, option);
       res.send(result);
@@ -226,8 +226,8 @@ async function run() {
           businessName,
           businessAddress,
           tinNum,
-          tradeLN
-        }
+          tradeLN,
+        },
       };
 
       const result = await userCollection.updateOne(filter, uptadeDoc, options);
@@ -242,8 +242,8 @@ async function run() {
       const options = { upsert: true };
       const updateDoc = {
         $set: {
-          role: "disabled"
-        }
+          role: "disabled",
+        },
       };
       const result = await userCollection.updateOne(filter, updateDoc, options);
 
@@ -267,8 +267,8 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const uptadeDoc = {
         $set: {
-          message
-        }
+          message,
+        },
       };
       const options = { upsert: true };
 
@@ -283,7 +283,7 @@ async function run() {
       const email = req.params.email;
 
       const alreadeseller = await hostRequestsCollection.findOne({
-        email: email
+        email: email,
       });
       if (alreadeseller) {
         return res.status(403).send({ message: "already send request" });
@@ -294,7 +294,7 @@ async function run() {
       const result = await hostRequestsCollection.insertOne({
         info,
         email,
-        status: "pending"
+        status: "pending",
       });
       res.json({ result, message: "seller request successfully sent" });
     });
@@ -313,14 +313,14 @@ async function run() {
       const options = { upsert: true };
       const uptadeDoc = {
         $set: {
-          status: "approved"
-        }
+          status: "approved",
+        },
       };
 
       userCollection.updateOne(
         { email: email },
         { $set: { role: "seller" } },
-        err => {
+        (err) => {
           if (err) {
             console.error("Failed to update user role:", err);
             return res
@@ -348,7 +348,7 @@ async function run() {
       userCollection.updateOne(
         { email: email },
         { $set: { role: "" } },
-        err => {
+        (err) => {
           if (err) {
             console.error("Failed to update user role:", err);
             return res
@@ -420,7 +420,7 @@ async function run() {
         buyNowPrice,
         minimumBid,
         startBiddingTime,
-        endBiddingTime
+        endBiddingTime,
       } = req.body;
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
@@ -432,8 +432,8 @@ async function run() {
           buyNowPrice,
           minimumBid,
           startBiddingTime,
-          endBiddingTime
-        }
+          endBiddingTime,
+        },
       };
 
       const result = await productCollection.updateOne(
@@ -469,12 +469,12 @@ async function run() {
 
         const products = await productCollection
           .find({
-            endBiddingTime: { $lt: formattedDate }
+            endBiddingTime: { $lt: formattedDate },
           })
           .toArray();
 
         const result = products.filter(
-          product => product.bids.length !== 0 || product.bids.length > 0
+          (product) => product.bids.length !== 0 || product.bids.length > 0
         );
         res.send(result);
       } catch (error) {
@@ -498,11 +498,11 @@ async function run() {
         // and the endBiddingTime is less than or equal to the current date
         const products = await productCollection
           .find({
-            $or: [{ bids: { $exists: false } }, { bids: { $size: 0 } }]
+            $or: [{ bids: { $exists: false } }, { bids: { $size: 0 } }],
           })
           .toArray();
         const result = products.filter(
-          product => product.endBiddingTime < formattedDate
+          (product) => product.endBiddingTime < formattedDate
         );
 
         res.send(result);
@@ -529,7 +529,7 @@ async function run() {
         // Find products with bidding ending within the next 24 hours
         const filteredProducts = await productCollection
           .find({
-            endBiddingTime: { $gt: today, $lt: formattedDate }
+            endBiddingTime: { $gt: today, $lt: formattedDate },
           })
           .toArray();
 
@@ -553,88 +553,9 @@ async function run() {
         // Find products with endBiddingTime less than 24 hours from now
         const filteredProducts = await productCollection
           .find({
-            endBiddingTime: { $lt: futureDate }
+            endBiddingTime: { $lt: futureDate },
           })
           .toArray();
-
-        res.send(filteredProducts);
-      } catch (error) {
-        res.status(500).json({ error: "Error retrieving products" });
-      }
-    });
-
-    //wekly end  bit
-    app.get("/products/bidding-end-week", async (req, res) => {
-      try {
-        // Retrieve the current date/time
-        const products = await productCollection.find({}).toArray();
-
-        const currentDate = new Date();
-        const today = currentDate.toISOString().slice(0, 16);
-        const futureDate = new Date(
-          currentDate.setDate(currentDate.getDate() + 7)
-        );
-        const formattedDate = futureDate.toISOString().slice(0, 16);
-
-        const filteredProducts = products.filter(
-          product =>
-            product.endBiddingTime < formattedDate &&
-            product.endBiddingTime > today
-        );
-
-        res.send(filteredProducts);
-      } catch (error) {
-        res.status(500).json({ error: "Error retrieving products" });
-      }
-    });
-
-    //end month
-    app.get("/products/bidding-end-month", async (req, res) => {
-      try {
-        // Retrieve the current date/time
-        const products = await productCollection.find({}).toArray();
-
-        const currentDate = new Date();
-
-        const sevenDay = new Date(
-          currentDate.setDate(currentDate.getDate() + 7)
-        );
-        const biggethenSeven = sevenDay.toISOString().slice(0, 16);
-
-        const futureDate = new Date(
-          currentDate.setDate(currentDate.getDate() + 30)
-        );
-        const formattedDate = futureDate.toISOString().slice(0, 16);
-
-        const filteredProducts = products.filter(
-          product =>
-            product.endBiddingTime < formattedDate &&
-            product.endBiddingTime > biggethenSeven
-        );
-
-        res.send(filteredProducts);
-      } catch (error) {
-        res.status(500).json({ error: "Error retrieving products" });
-      }
-    });
-    //upcomming
-    app.get("/products/upcoming", async (req, res) => {
-      try {
-        // Retrieve the current date/time
-        const products = await productCollection.find({}).toArray();
-
-        const currentDate = new Date();
-        const year = currentDate.getFullYear();
-        const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-        const day = String(currentDate.getDate()).padStart(2, "0");
-        const hours = String(currentDate.getHours()).padStart(2, "0");
-        const minutes = String(currentDate.getMinutes()).padStart(2, "0");
-
-        const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-        const filteredProducts = products.filter(
-          product => product.startBiddingTime > formattedDate
-        );
 
         res.send(filteredProducts);
       } catch (error) {
@@ -654,12 +575,12 @@ async function run() {
           bidderNumber,
           bidderPhoto,
           productName,
-          productPhoto
+          productPhoto,
         } = req.body;
 
         // Find the product by its ID in the database
         const product = await productCollection.findOne({
-          _id: new ObjectId(productId)
+          _id: new ObjectId(productId),
         });
 
         if (!product) {
@@ -689,7 +610,7 @@ async function run() {
         if (bidAmount < currentHighestBid + minimumBid) {
           return res.status(400).json({
             error:
-              "New price cannot be lower than the current bid price plus the minimum bid amount."
+              "New price cannot be lower than the current bid price plus the minimum bid amount.",
           });
         }
 
@@ -703,7 +624,7 @@ async function run() {
           bidderPhoto,
           productName,
           productPhoto,
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         };
 
         product.bids.push(newBid);
@@ -728,7 +649,7 @@ async function run() {
 
         // Find the product by its ID in the database
         const product = await productCollection.findOne({
-          _id: new ObjectId(productId)
+          _id: new ObjectId(productId),
         });
 
         if (!product) {
@@ -766,7 +687,7 @@ async function run() {
               from: "mdmahmudulla474@gmail.com",
               to: winner.bidderEmail,
               subject: "Congratulations! You won the bid!",
-              text: "Dear winner, congratulations on winning the bid. Please proceed with the payment process."
+              text: "Dear winner, congratulations on winning the bid. Please proceed with the payment process.",
             };
 
             transporter.sendMail(mailOptions, (error, info) => {
@@ -778,7 +699,7 @@ async function run() {
             });
 
             return res.status(200).json({
-              message: "Bidding has ended. Winner selected and email sent."
+              message: "Bidding has ended. Winner selected and email sent.",
             });
           }
 
@@ -803,7 +724,7 @@ async function run() {
         // Find all products that have bids from the bidder
         const products = await productCollection
           .find({
-            "bids.bidderId": bidderId
+            "bids.bidderId": bidderId,
           })
           .toArray();
 
@@ -821,7 +742,7 @@ async function run() {
         // Find all products where the user is the winner
         const winningProducts = await productCollection
           .find({
-            "winner.bidderEmail": userEmail
+            "winner.bidderEmail": userEmail,
           })
           .toArray();
 
@@ -854,8 +775,8 @@ async function run() {
       const filter = { _id: new ObjectId(id) };
       const updateDoc = {
         $set: {
-          status: "approved"
-        }
+          status: "approved",
+        },
       };
 
       const result = await paymentColletion.updateOne(filter, updateDoc);
@@ -876,8 +797,8 @@ async function run() {
             winner,
             endBiddingTime: formattedDate,
             payment: "approved",
-            status: "sold-out"
-          }
+            status: "sold-out",
+          },
         }
       );
       res.send(result);
@@ -893,8 +814,8 @@ async function run() {
         { _id: new ObjectId(id) },
         {
           $set: {
-            payment: "pending"
-          }
+            payment: "pending",
+          },
         }
       );
 
@@ -907,8 +828,8 @@ async function run() {
       const filter = { _id: new ObjectId(paymentId) };
       const updateDoc = {
         $set: {
-          status: "approved"
-        }
+          status: "approved",
+        },
       };
 
       const result = await paymentColletion.updateOne(filter, updateDoc);
@@ -917,8 +838,8 @@ async function run() {
         {
           $set: {
             payment: "approved",
-            status: "sold out"
-          }
+            status: "sold out",
+          },
         }
       );
       res.send(result);
@@ -931,8 +852,8 @@ async function run() {
       const filter = { _id: new ObjectId(paymentId) };
       const updateDoc = {
         $set: {
-          status: "failed"
-        }
+          status: "failed",
+        },
       };
 
       const result = await paymentColletion.updateOne(filter, updateDoc);
@@ -940,8 +861,8 @@ async function run() {
         { _id: new ObjectId(id) },
         {
           $set: {
-            payment: ""
-          }
+            payment: "",
+          },
         }
       );
       res.send(result);
@@ -949,7 +870,9 @@ async function run() {
     //get all   payment
     app.get("/payments", async (req, res) => {
       const result = await paymentColletion.find({}).toArray();
-      const payments = result.filter(payment => payment.status === "approved");
+      const payments = result.filter(
+        (payment) => payment.status === "approved"
+      );
       res.send(payments);
     });
     ///get singel payment
@@ -957,7 +880,7 @@ async function run() {
       const id = req.params.id;
       const query = { productId: id };
       const result = await paymentColletion.findOne(query, {
-        sort: { _id: -1 }
+        sort: { _id: -1 },
       });
       res.send(result);
     });
@@ -967,10 +890,28 @@ async function run() {
       const result = await paymentColletion.find({}).toArray();
 
       const orders = result.filter(
-        order => order.order === "order" && order?.bidderEmail === email
+        (order) => order.order === "order" && order?.bidderEmail === email
       );
       res.send(orders);
     });
+    /*koyel item start here 
+
+
+
+///
+/
+/
+///
+/
+/
+/
+/
+/
+/
+/
+/
+/
+*/
 
     /// koyel   product start here
 
@@ -996,135 +937,22 @@ async function run() {
       res.send(result);
     });
 
-    ////today  end bidding
-    app.get("/products/bidding-end-today", async (req, res) => {
-      try {
-        // Retrieve the current date/time
-        const currentDate = new Date();
-        const today = currentDate.toISOString().slice(0, 16);
+    //get all  koyel product by category name
 
-        // Calculate the end date/time for 24 hours from now
-        const futureDate = new Date(
-          currentDate.getTime() + 24 * 60 * 60 * 1000
-        );
-        const formattedDate = futureDate.toISOString().slice(0, 16);
-
-        console.log(formattedDate);
-
-        // Find products with bidding ending within the next 24 hours
-        const filteredProducts = await productCollection
-          .find({
-            endBiddingTime: { $gt: today, $lt: formattedDate }
-          })
-          .toArray();
-
-        res.send(filteredProducts);
-      } catch (error) {
-        res.status(500).json({ error: "Error retrieving products" });
-      }
+    ///get cr
+    app.get("/products/category/cr", async (req, res) => {
+      const result = await koyelCollection.find({ category: "CR" }).toArray();
+      res.send(result);
     });
 
-    app.get("/products/bidding-end-less-than-24-hours", async (req, res) => {
-      try {
-        // Retrieve the current date/time
-        const currentDate = new Date();
-
-        // Calculate the end date/time for 24 hours from now
-        const futureDate = new Date(
-          currentDate.getTime() + 24 * 60 * 60 * 1000
-        );
-        console.log(futureDate);
-
-        // Find products with endBiddingTime less than 24 hours from now
-        const filteredProducts = await productCollection
-          .find({
-            endBiddingTime: { $lt: futureDate }
-          })
-          .toArray();
-
-        res.send(filteredProducts);
-      } catch (error) {
-        res.status(500).json({ error: "Error retrieving products" });
-      }
+    app.get("/products/category/ga", async (req, res) => {
+      const result = await koyelCollection.find({ category: "GA" }).toArray();
+      res.send(result);
     });
 
-    //wekly end  bit
-    app.get("/products/item/bidding-end-week", async (req, res) => {
-      try {
-        // Retrieve the current date/time
-        const products = await koyelCollection.find({}).toArray();
-
-        const currentDate = new Date();
-        const today = currentDate.toISOString().slice(0, 16);
-        const futureDate = new Date(
-          currentDate.setDate(currentDate.getDate() + 7)
-        );
-        const formattedDate = futureDate.toISOString().slice(0, 16);
-
-        const filteredProducts = products.filter(
-          product =>
-            product.endBiddingTime < formattedDate &&
-            product.endBiddingTime > today
-        );
-
-        res.send(filteredProducts);
-      } catch (error) {
-        res.status(500).json({ error: "Error retrieving products" });
-      }
-    });
-
-    //end month
-    app.get("/products/item/bidding-end-month", async (req, res) => {
-      try {
-        // Retrieve the current date/time
-        const products = await koyelCollection.find({}).toArray();
-
-        const currentDate = new Date();
-
-        const sevenDay = new Date(
-          currentDate.setDate(currentDate.getDate() + 7)
-        );
-        const biggethenSeven = sevenDay.toISOString().slice(0, 16);
-
-        const futureDate = new Date(
-          currentDate.setDate(currentDate.getDate() + 30)
-        );
-        const formattedDate = futureDate.toISOString().slice(0, 16);
-
-        const filteredProducts = products.filter(
-          product =>
-            product.endBiddingTime < formattedDate &&
-            product.endBiddingTime > biggethenSeven
-        );
-
-        res.send(filteredProducts);
-      } catch (error) {
-        res.status(500).json({ error: "Error retrieving products" });
-      }
-    });
-    //upcomming
-    app.get("/products/item/upcoming", async (req, res) => {
-      try {
-        // Retrieve the current date/time
-        const products = await productCollection.find({}).toArray();
-
-        const currentDate = new Date();
-        const year = currentDate.getFullYear();
-        const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-        const day = String(currentDate.getDate()).padStart(2, "0");
-        const hours = String(currentDate.getHours()).padStart(2, "0");
-        const minutes = String(currentDate.getMinutes()).padStart(2, "0");
-
-        const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-        const filteredProducts = products.filter(
-          product => product.startBiddingTime > formattedDate
-        );
-
-        res.send(filteredProducts);
-      } catch (error) {
-        res.status(500).json({ error: "Error retrieving products" });
-      }
+    app.get("/products/category/po", async (req, res) => {
+      const result = await koyelCollection.find({ category: "PO" }).toArray();
+      res.send(result);
     });
 
     ///bid close with  bidding
@@ -1141,12 +969,12 @@ async function run() {
 
         const products = await koyelCollection
           .find({
-            endBiddingTime: { $lt: formattedDate }
+            endBiddingTime: { $lt: formattedDate },
           })
           .toArray();
 
         const result = products.filter(
-          product => product.bids.length !== 0 || product.bids.length > 0
+          (product) => product.bids.length !== 0 || product.bids.length > 0
         );
         res.send(result);
       } catch (error) {
@@ -1170,7 +998,7 @@ async function run() {
       try {
         // Find the product by ID
         const product = await koyelCollection.findOne({
-          _id: new ObjectId(productId)
+          _id: new ObjectId(productId),
         });
 
         if (!product) {
@@ -1187,7 +1015,7 @@ async function run() {
         }
 
         // Iterate through each koyel bid data
-        koyelBids.forEach(async koyelBid => {
+        koyelBids.forEach(async (koyelBid) => {
           const {
             koyelId,
             bidAmount,
@@ -1196,11 +1024,17 @@ async function run() {
             bidderId,
             koyel,
             bidderPhoto,
-            bidderNumber
+            bidderNumber,
+
+            expectedDate,
+            landing,
+            shipmentType,
           } = koyelBid;
 
           // Find the koyel object by ID
-          const koyelitem = product.koyel.find(koyel => koyel._id === koyelId);
+          const koyelitem = product.koyel.find(
+            (koyel) => koyel._id === koyelId
+          );
 
           if (!koyelitem) {
             return res
@@ -1226,7 +1060,10 @@ async function run() {
             weight: koyel?.weight,
             TS: koyel?.TS,
             YP: koyel?.YP,
-            EL: koyel?.EL
+            EL: koyel?.EL,
+            expectedDate,
+            landing,
+            shipmentType,
           };
 
           // Add the new bid to the koyel object's bids array
@@ -1243,7 +1080,7 @@ async function run() {
           bidAmount: bidder?.bidAmount,
           bidderPhoto: bidder?.bidderPhoto,
           bidderNumber: bidder?.bidderNumber,
-          item: koyelBids
+          item: koyelBids,
         };
 
         product.bids.push(bids);
@@ -1255,7 +1092,7 @@ async function run() {
         );
 
         return res.json({
-          message: "Bids placed successfully"
+          message: "Bids placed successfully",
         });
       } catch (error) {
         console.error("Error placing bids:", error);
@@ -1270,7 +1107,7 @@ async function run() {
         // Find all products that have bids from the bidder
         const products = await koyelCollection
           .find({
-            "bids.bidderId": bidderId
+            "bids.bidderId": bidderId,
           })
           .toArray();
 
@@ -1316,7 +1153,7 @@ async function run() {
 
         // Find the product by its ID in the database
         const product = await koyelCollection.findOne({
-          _id: new ObjectId(productId)
+          _id: new ObjectId(productId),
         });
 
         if (!product) {
@@ -1357,7 +1194,7 @@ async function run() {
                 from: "your-email@gmail.com",
                 to: highestBid.bidderEmail,
                 subject: "Congratulations! You won the bid!",
-                text: "Dear winner, congratulations on winning the bid. Please proceed with the payment process."
+                text: "Dear winner, congratulations on winning the bid. Please proceed with the payment process.",
               };
 
               transporter.sendMail(mailOptions, (error, info) => {
@@ -1557,8 +1394,8 @@ async function run() {
             {
               $match: {
                 "winners.bidderId": userId,
-                "winners.bidderEmail": userEmail
-              }
+                "winners.bidderEmail": userEmail,
+              },
             },
             {
               $project: {
@@ -1569,13 +1406,13 @@ async function run() {
                     cond: {
                       $and: [
                         { $eq: ["$$winner.bidderId", userId] },
-                        { $eq: ["$$winner.bidderEmail", userEmail] }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
+                        { $eq: ["$$winner.bidderEmail", userEmail] },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
           ])
           .toArray();
 
@@ -1589,7 +1426,7 @@ async function run() {
     app.get("/products/koyel-item/item/:id", async (req, res) => {
       const productId = req.params.id;
       const product = await koyelCollection.findOne({
-        _id: new ObjectId(productId)
+        _id: new ObjectId(productId),
       });
 
       if (product) {
@@ -1598,7 +1435,7 @@ async function run() {
 
         const response = {
           productName: productName,
-          productImg: productImg
+          productImg: productImg,
         };
 
         res.json(response);
@@ -1619,11 +1456,11 @@ async function run() {
         productID,
         bidderId: paymentDetails.bidderId,
         koyel: items,
-        status: "pending"
+        status: "pending",
       });
 
       const product = await koyelCollection.findOne({
-        _id: new ObjectId(productID)
+        _id: new ObjectId(productID),
       });
 
       if (!product) {
@@ -1633,7 +1470,7 @@ async function run() {
       for (const item of items) {
         const { koyelId } = item;
 
-        const koyelItem = product.koyel.find(item => item._id === koyelId);
+        const koyelItem = product.koyel.find((item) => item._id === koyelId);
 
         if (!koyelItem) {
           return res
@@ -1662,7 +1499,7 @@ async function run() {
         const payment = await koyelitempaymentColletion.findOne(
           {
             productID: productId,
-            bidderId: bidderId
+            bidderId: bidderId,
           },
           { sort: { _id: -1 }, projection: { status: 1 } }
         );
@@ -1689,7 +1526,7 @@ async function run() {
         const payment = await koyelitempaymentColletion.findOne(
           {
             productID: productId,
-            bidderId: bidderId
+            bidderId: bidderId,
           },
           { sort: { _id: -1 } }
         );
@@ -1699,14 +1536,14 @@ async function run() {
         );
 
         const product = await koyelCollection.findOne({
-          _id: new ObjectId(productId)
+          _id: new ObjectId(productId),
         });
 
         ///uptadekoyelItem
         for (const item of itemId) {
           const { koyelId } = item;
 
-          const koyelItem = product.koyel.find(item => item._id === koyelId);
+          const koyelItem = product.koyel.find((item) => item._id === koyelId);
           console.log(koyelItem);
           if (!koyelItem) {
             return res
@@ -1737,7 +1574,7 @@ async function run() {
         const payment = await koyelitempaymentColletion.findOne(
           {
             productID: productId,
-            bidderId: bidderId
+            bidderId: bidderId,
           },
           { sort: { _id: -1 } }
         );
@@ -1747,14 +1584,14 @@ async function run() {
         );
 
         const product = await koyelCollection.findOne({
-          _id: new ObjectId(productId)
+          _id: new ObjectId(productId),
         });
 
         ///uptadekoyelItem
         for (const item of itemId) {
           const { koyelId } = item;
 
-          const koyelItem = product.koyel.find(item => item._id === koyelId);
+          const koyelItem = product.koyel.find((item) => item._id === koyelId);
           console.log(koyelItem);
           if (!koyelItem) {
             return res
@@ -1783,7 +1620,7 @@ async function run() {
       const orders = await koyelitempaymentColletion
         .find({
           bidderId: bidderId,
-          order: "order"
+          order: "order",
         })
         .toArray();
 
@@ -1801,7 +1638,7 @@ async function run() {
         const payment = await koyelitempaymentColletion.findOne(
           {
             productID: productId,
-            bidderId: bidderId
+            bidderId: bidderId,
           },
           { sort: { _id: -1 } }
         );
@@ -1812,14 +1649,14 @@ async function run() {
         );
 
         const product = await koyelCollection.findOne({
-          _id: new ObjectId(productId)
+          _id: new ObjectId(productId),
         });
 
         ///uptadekoyelItem
         for (const items of itemId) {
           const { koyelId, item } = items;
 
-          const koyelItem = product.koyel.find(item => item._id === koyelId);
+          const koyelItem = product.koyel.find((item) => item._id === koyelId);
 
           if (!koyelItem) {
             return res
@@ -1846,7 +1683,7 @@ async function run() {
             weight: item?.koyel.weight,
             TS: item?.koyel.TS,
             YP: item?.koyel.YP,
-            EL: item?.koyel.EL
+            EL: item?.koyel.EL,
           };
 
           console.log(paymentDetails);
@@ -1875,7 +1712,7 @@ async function run() {
         const payment = await koyelitempaymentColletion.findOne(
           {
             productID: productId,
-            bidderId: bidderId
+            bidderId: bidderId,
           },
           { sort: { _id: -1 } }
         );
@@ -1885,14 +1722,14 @@ async function run() {
         );
 
         const product = await koyelCollection.findOne({
-          _id: new ObjectId(productId)
+          _id: new ObjectId(productId),
         });
 
         ///uptadekoyelItem
         for (const item of itemId) {
           const { koyelId } = item;
 
-          const koyelItem = product.koyel.find(item => item._id === koyelId);
+          const koyelItem = product.koyel.find((item) => item._id === koyelId);
           console.log(koyelItem);
           if (!koyelItem) {
             return res
@@ -1939,7 +1776,7 @@ async function run() {
         bidderId,
         bidderEmail,
         bidderNumber,
-        bidderPhoto
+        bidderPhoto,
       } = paymentDetails;
 
       ///post  order
@@ -1949,24 +1786,26 @@ async function run() {
         bidderId: paymentDetails?.bidderId,
         koyel: items,
         status: "pending",
-        order: "order"
+        order: "order",
       };
       await koyelitempaymentColletion.insertOne(payment);
 
       try {
         //   // // Find the product by ID
         const product = await koyelCollection.findOne({
-          _id: new ObjectId(productId)
+          _id: new ObjectId(productId),
         });
 
         if (!product) {
           return res.status(404).json({ error: "Product not found" });
         }
         // Iterate through each koyel bid data
-        items.forEach(async koyelBid => {
+        items.forEach(async (koyelBid) => {
           const { koyelId, koyel } = koyelBid;
           // Find the koyel object by ID
-          const koyelitem = product.koyel.find(koyel => koyel._id === koyelId);
+          const koyelitem = product.koyel.find(
+            (koyel) => koyel._id === koyelId
+          );
           if (!koyelitem) {
             return res
               .status(404)
@@ -1991,7 +1830,7 @@ async function run() {
             weight: koyel?.weight,
             TS: koyel?.TS,
             YP: koyel?.YP,
-            EL: koyel?.EL
+            EL: koyel?.EL,
           };
           // //Add the new bid to the koyel object's bids array
           koyelitem.bids.push(newBid);
@@ -2002,7 +1841,7 @@ async function run() {
           { $set: product }
         );
         return res.json({
-          message: "Bids placed successfully"
+          message: "Bids placed successfully",
         });
       } catch (error) {
         console.error("Error placing bids:", error);
