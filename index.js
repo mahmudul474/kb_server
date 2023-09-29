@@ -1,4 +1,5 @@
 const express = require("express");
+const { DateTime } = require("luxon");
 const app = express();
 var cors = require("cors");
 const port = process.env.PORT || 5000;
@@ -16,8 +17,8 @@ const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
     user: "mdmahmudulla474@gmail.com",
-    pass: "pfnnszixydqzfkhz",
-  },
+    pass: "pfnnszixydqzfkhz"
+  }
 });
 
 ///midleWere
@@ -57,8 +58,8 @@ const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
-    deprecationErrors: true,
-  },
+    deprecationErrors: true
+  }
 });
 
 async function run() {
@@ -955,15 +956,8 @@ async function run() {
     ///bid close with  bidding
     app.get("/products/koyel-item/closed-bids/with-bids", async (req, res) => {
       try {
-        const currentDate = new Date();
-        const year = currentDate.getFullYear();
-        const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-        const day = String(currentDate.getDate()).padStart(2, "0");
-        const hours = String(currentDate.getHours()).padStart(2, "0");
-        const minutes = String(currentDate.getMinutes()).padStart(2, "0");
-
-        const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
-
+        const bdTime = DateTime.now().setZone("Asia/Dhaka");
+        const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
         const products = await koyelCollection
           .find({
             endBiddingTime: { $lt: formattedDate }
@@ -979,14 +973,14 @@ async function run() {
       }
     });
 
-    //// time testing
-const { DateTime } = require("luxon");
-app.get("/time", async (req, res) => {
-  const bdTime = DateTime.now().setZone("Asia/Dhaka");
-  const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
+    //     //// time testing
 
-  res.send(formattedDate);
-});
+    // app.get("/time", async (req, res) => {
+    //   const bdTime = DateTime.now().setZone("Asia/Dhaka");
+    //   const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
+
+    //   res.send(formattedDate);
+    // });
 
     ///get singel koyel item
     app.get("/products/koyel/:id", async (req, res) => {
