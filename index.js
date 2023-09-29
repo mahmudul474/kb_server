@@ -980,21 +980,13 @@ async function run() {
     });
 
     //// time testing
+const { DateTime } = require("luxon");
+app.get("/time", async (req, res) => {
+  const bdTime = DateTime.now().setZone("Asia/Dhaka");
+  const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
 
-    app.get("/time", async (req, res) => {
-       const currentDate = new Date();
-       const options = {
-         timeZone: "Asia/Dhaka",
-         year: "numeric",
-         month: "2-digit",
-         day: "2-digit",
-         hour: "2-digit",
-         minute: "2-digit"
-       };
-       const formattedDate = currentDate.toLocaleString("en-US", options);
-       res.send(formattedDate);
-
-    });
+  res.send(formattedDate);
+});
 
     ///get singel koyel item
     app.get("/products/koyel/:id", async (req, res) => {
