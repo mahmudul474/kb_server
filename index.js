@@ -926,12 +926,16 @@ async function run() {
 
     //get all  koyel product
     app.get("/products/items/v1", async (req, res) => {
-      
-        const products = await koyelCollection.find({}).toArray();
-        res.send(products);
-      
+      const products = await koyelCollection.find({}).toArray();
+      res.send(products);
     });
 
+    app.delete("/product/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await koyelCollection.deleteOne(query);
+      res.json({ result, message: "  deleted product successfully" });
+    });
 
 
 
