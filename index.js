@@ -926,19 +926,14 @@ async function run() {
 
     //get all  koyel product
     app.get("/products/items/v1", async (req, res) => {
-      try {
+      
         const products = await koyelCollection.find({}).toArray();
-        res.status(200).json({ data: products });
-      } catch (error) {
-        console.error("Error fetching products:", error);
-        res
-          .status(500)
-          .json({ message: "An error occurred while fetching products." });
-      }
+        res.send(products);
+      
     });
 
 
-    
+
 
     //get all  koyel product by category name
 
