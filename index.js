@@ -982,27 +982,18 @@ async function run() {
     //// time testing
 
     app.get("/time", async (req, res) => {
-     const currentDate = new Date();
-     const options = { timeZone: "Asia/Dhaka" }; // Set the time zone to Bangladesh Standard Time
-     const year = currentDate.toLocaleString("en-US", {
-       ...options,
-       year: "numeric"
-     });
-     const month = String(
-       currentDate.toLocaleString("en-US", { ...options, month: "2-digit" })
-     ).padStart(2, "0");
-     const day = String(
-       currentDate.toLocaleString("en-US", { ...options, day: "2-digit" })
-     ).padStart(2, "0");
-     const hours = String(
-       currentDate.toLocaleString("en-US", { ...options, hour: "2-digit" })
-     ).padStart(2, "0");
-     const minutes = String(
-       currentDate.toLocaleString("en-US", { ...options, minute: "2-digit" })
-     ).padStart(2, "0");
-     const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
-     res.send(formattedDate);
- 
+       const currentDate = new Date();
+       const options = {
+         timeZone: "Asia/Dhaka",
+         year: "numeric",
+         month: "2-digit",
+         day: "2-digit",
+         hour: "2-digit",
+         minute: "2-digit"
+       };
+       const formattedDate = currentDate.toLocaleString("en-US", options);
+       res.send(formattedDate);
+
     });
 
     ///get singel koyel item
