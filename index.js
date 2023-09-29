@@ -948,12 +948,16 @@ async function run() {
     });
 
     app.get("/products/category/ga", async (req, res) => {
-      const result = await koyelCollection.find({ category: "GA" }).toArray();
+      const result = await koyelCollection
+        .find({ category: "GI/GA" })
+        .toArray();
       res.send(result);
     });
 
     app.get("/products/category/po", async (req, res) => {
-      const result = await koyelCollection.find({ category: "PO" }).toArray();
+      const result = await koyelCollection
+        .find({ category: "PO/HR" })
+        .toArray();
       res.send(result);
     });
 
