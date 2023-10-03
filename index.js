@@ -983,12 +983,12 @@ async function run() {
 
     //     //// time testing
 
-    // app.get("/time", async (req, res) => {
-    //   const bdTime = DateTime.now().setZone("Asia/Dhaka");
-    //   const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
+    app.get("/time", async (req, res) => {
+      const bdTime = DateTime.now().setZone("Asia/Dhaka");
+      const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
 
-    //   res.send(formattedDate);
-    // });
+      res.send(formattedDate);
+    });
 
     ///get singel koyel item
     app.get("/products/koyel/:id", async (req, res) => {
@@ -998,17 +998,27 @@ async function run() {
       res.send(result);
     });
 
+
+
+/////test api pass here 
+
+
+
     ///koyel  bid place
-    app.post("/products/:productId/koyel/bids", async (req, res) => {
+    app.post("/product/:productId/bid/v1", async (req, res) => {
       const { productId } = req.params;
-      const { koyelBids, bidder } = req.body;
+      const { koyelBids, bidder, bids } = req.body;
+
+ 
 
       try {
         // Find the product by ID
         const product = await koyelCollection.findOne({
           _id: new ObjectId(productId)
-        });
+        }); 
+        console.log(product);
 
+      
         if (!product) {
           return res.status(404).json({ error: "Product not found" });
         }
@@ -1018,9 +1028,7 @@ async function run() {
         const biddingEndTime = new Date(product.endBiddingTime).getTime();
         if (currentTime > biddingEndTime) {
           return res.status(400).json({ error: "Bidding has ended" });
-        } else if (product.status === "sold-out") {
-          return res.status(400).json({ error: "product sold-out " });
-        }
+        }  
 
         // Iterate through each koyel bid data
         koyelBids.forEach(async koyelBid => {
@@ -1033,10 +1041,7 @@ async function run() {
             koyel,
             bidderPhoto,
             bidderNumber,
-
-            expectedDate,
-            landing,
-            shipmentType
+            shipping
           } = koyelBid;
 
           // Find the koyel object by ID
@@ -1067,47 +1072,54 @@ async function run() {
             TS: koyel?.TS,
             YP: koyel?.YP,
             EL: koyel?.EL,
-            expectedDate,
-            landing,
-            shipmentType
+            shipping
           };
 
           // Add the new bid to the koyel object's bids array
           koyelitem.bids.push(newBid);
         });
 
-        const bids = {
-          productName: bidder?.productName,
-          productID: bidder?.productID,
-          productPhoto: bidder?.productPhoto,
-          bidderName: bidder?.bidderName,
-          bidderEmail: bidder?.bidderEmail,
-          bidderId: bidder?.bidderId,
-          bidAmount: bidder?.bidAmount,
-          bidderPhoto: bidder?.bidderPhoto,
-          bidderNumber: bidder?.bidderNumber,
-          item: koyelBids,
-          expectedDate,
-          landing,
-          shipmentType
-        };
+        // const bids = {
+        //   productName: bidder?.productName,
+        //   productID: bidder?.productID,
+        //   productPhoto: bidder?.productPhoto,
+        //   bidderName: bidder?.bidderName,
+        //   bidderEmail: bidder?.bidderEmail,
+        //   bidderId: bidder?.bidderId,
+        //   bidAmount: bidder?.bidAmount,
+        //   bidderPhoto: bidder?.bidderPhoto,
+        //   bidderNumber: bidder?.bidderNumber,
+        //   item: koyelBids,
+        //   expectedDate,
+        //   landing,
+        //   shipmentType
+        // };
 
-        product.bids.push(bids);
+         product.bids.push(bids);
 
-        // Update the product in the database
+       // Update the product in the database
         await koyelCollection.updateOne(
           { _id: new ObjectId(productId) },
           { $set: product }
         );
 
-        return res.json({
-          message: "Bids placed successfully"
+          return res.json({
+             message: "Bids placed successfully"
         });
       } catch (error) {
+      
+
         console.error("Error placing bids:", error);
-        return res.status(500).json({ error: "Internal Server Error" });
+        return res.status(500).json({error, error: "Internal Server Error" });
       }
     });
+
+
+
+
+
+
+
     //my bids
     app.get("/bids/bidder/:bidderId/products/koyel", async (req, res) => {
       try {
@@ -1190,10 +1202,12 @@ async function run() {
           );
 
           // Check if the current time is greater than the bidding end time
-          const currentTime = new Date().getTime();
-          const biddingEndTime = new Date(koyel.endBiddingTime).getTime();
+           const bdTime = DateTime.now().setZone("Asia/Dhaka");
+           const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
 
-          if (currentTime >= biddingEndTime) {
+           
+
+          if (formattedDate >= koyel.endBiddingTime) {
             // Bidding has ended, select the winner if not already selected
             if (!koyel.winner) {
               koyel.winner = highestBid;
