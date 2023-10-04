@@ -1079,10 +1079,7 @@ async function run() {
         product.bids.push(createBids);
 
         // Update the product in the database
-        await koyelCollection.updateOne(
-          { _id: new ObjectId(productId) },
-          { $set: product }
-        );
+        winners.push(...resultArray);
 
         return res.json({
           message: "Bids placed successfully"
@@ -1163,7 +1160,7 @@ async function run() {
 
         // Iterate through each koyel object and determine the winner
         const initialWinner = [];
-        
+        const winners = [];
         for (const koyel of product.koyel) {
           // Check if any bids exist for the koyel object
           if (koyel.bids.length === 0) {
@@ -1247,14 +1244,9 @@ async function run() {
 
         // Convert the filtered data object into an array
         const resultArray = Object.values(filteredData);
-      
-  product?.winners.push(resultArray);
-  await koyelCollection.updateOne(
-    { _id: new ObjectId(productId) },
-    { $set: product }
-  );
+        winners.push(resultArray);
 
-        res.status(200).json({ winners });
+        res.status(200).json({ winners: resultArray });
       } catch (error) {
         res.status(500).json({ error: "Error retrieving winners" });
       }
