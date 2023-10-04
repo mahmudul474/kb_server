@@ -1007,28 +1007,25 @@ async function run() {
     ///koyel  bid place
     app.post("/product/:productId/bid/v1", async (req, res) => {
       const { productId } = req.params;
-      const { koyelBids, bidder, bids } = req.body;
-
- 
+      const { koyelBids, bidder, createBids } = req.body;
 
       try {
         // Find the product by ID
         const product = await koyelCollection.findOne({
           _id: new ObjectId(productId)
-        }); 
+        });
         console.log(product);
 
-      
         if (!product) {
           return res.status(404).json({ error: "Product not found" });
         }
 
         // Check if bidding is still open
-        const currentTime = new Date().getTime();
-        const biddingEndTime = new Date(product.endBiddingTime).getTime();
-        if (currentTime > biddingEndTime) {
+        const bdTime = DateTime.now().setZone("Asia/Dhaka");
+        const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
+        if (formattedDate > product.endBiddingTime) {
           return res.status(400).json({ error: "Bidding has ended" });
-        }  
+        }
 
         // Iterate through each koyel bid data
         koyelBids.forEach(async koyelBid => {
@@ -1079,46 +1076,22 @@ async function run() {
           koyelitem.bids.push(newBid);
         });
 
-        // const bids = {
-        //   productName: bidder?.productName,
-        //   productID: bidder?.productID,
-        //   productPhoto: bidder?.productPhoto,
-        //   bidderName: bidder?.bidderName,
-        //   bidderEmail: bidder?.bidderEmail,
-        //   bidderId: bidder?.bidderId,
-        //   bidAmount: bidder?.bidAmount,
-        //   bidderPhoto: bidder?.bidderPhoto,
-        //   bidderNumber: bidder?.bidderNumber,
-        //   item: koyelBids,
-        //   expectedDate,
-        //   landing,
-        //   shipmentType
-        // };
+        product.bids.push(createBids);
 
-         product.bids.push(bids);
-
-       // Update the product in the database
+        // Update the product in the database
         await koyelCollection.updateOne(
           { _id: new ObjectId(productId) },
           { $set: product }
         );
 
-          return res.json({
-             message: "Bids placed successfully"
+        return res.json({
+          message: "Bids placed successfully"
         });
       } catch (error) {
-      
-
         console.error("Error placing bids:", error);
-        return res.status(500).json({error, error: "Internal Server Error" });
+        return res.status(500).json({ error, error: "Internal Server Error" });
       }
     });
-
-
-
-
-
-
 
     //my bids
     app.get("/bids/bidder/:bidderId/products/koyel", async (req, res) => {
@@ -1189,6 +1162,7 @@ async function run() {
         }
 
         // Iterate through each koyel object and determine the winner
+        const initialWinner = [];
         const winners = [];
         for (const koyel of product.koyel) {
           // Check if any bids exist for the koyel object
@@ -1202,31 +1176,29 @@ async function run() {
           );
 
           // Check if the current time is greater than the bidding end time
-           const bdTime = DateTime.now().setZone("Asia/Dhaka");
-           const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
-
-           
+          const bdTime = DateTime.now().setZone("Asia/Dhaka");
+          const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
 
           if (formattedDate >= koyel.endBiddingTime) {
             // Bidding has ended, select the winner if not already selected
             if (!koyel.winner) {
               koyel.winner = highestBid;
 
-              // Send email to the winner
-              const mailOptions = {
-                from: "your-email@gmail.com",
-                to: highestBid.bidderEmail,
-                subject: "Congratulations! You won the bid!",
-                text: "Dear winner, congratulations on winning the bid. Please proceed with the payment process."
-              };
+              // // Send email to the winner
+              // const mailOptions = {
+              //   from: "your-email@gmail.com",
+              //   to: highestBid.bidderEmail,
+              //   subject: "Congratulations! You won the bid!",
+              //   text: "Dear winner, congratulations on winning the bid. Please proceed with the payment process."
+              // };
 
-              transporter.sendMail(mailOptions, (error, info) => {
-                if (error) {
-                  console.error("Error sending email:", error);
-                } else {
-                  console.log("Email sent:", info.response);
-                }
-              });
+              // transporter.sendMail(mailOptions, (error, info) => {
+              //   if (error) {
+              //     console.error("Error sending email:", error);
+              //   } else {
+              //     console.log("Email sent:", info.response);
+              //   }
+              // });
 
               // Save the updated koyel object in the product document
               await koyelCollection.updateOne(
@@ -1235,14 +1207,49 @@ async function run() {
                 { arrayFilters: [{ "koyel._id": koyel._id }] }
               );
 
-              winners.push(highestBid); // Add the winner to the winners array
+              initialWinner.push(highestBid); // Add the winner to the winners array
             } else {
-              winners.push(koyel.winner); // Winner already selected for this koyel object
+              initialWinner.push(koyel.winner); // Winner already selected for this koyel object
             }
           }
         }
 
-        res.status(200).json({ winners: winners.filter(Boolean) });
+        const filteredData = {};
+
+        // Restructure the data
+        initialWinner.forEach(item => {
+          const { bidderId, bidderEmail, shipping } = item;
+
+          if (!filteredData[bidderEmail]) {
+            filteredData[bidderEmail] = {
+              bidderId,
+              bidderEmail,
+              shipping,
+              winproduct: []
+            };
+          }
+
+          filteredData[bidderEmail].winproduct.push({
+            bidderNumber: item.bidderNumber,
+            koyelId: item.koyelId,
+            minimumBid: item.minimumBid,
+            currentBid: item.currentBid,
+            item: item.item,
+            spec: item.spec,
+            Thickness: item.Thickness,
+            Width: item.Width,
+            weight: item.weight,
+            TS: item.TS,
+            YP: item.YP,
+            EL: item.EL
+          });
+        });
+
+        // Convert the filtered data object into an array
+        const resultArray = Object.values(filteredData);
+        winners.push(resultArray);
+
+        res.status(200).json({ winners });
       } catch (error) {
         res.status(500).json({ error: "Error retrieving winners" });
       }
