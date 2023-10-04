@@ -1163,7 +1163,7 @@ async function run() {
 
         // Iterate through each koyel object and determine the winner
         const initialWinner = [];
-        const winners = [];
+        
         for (const koyel of product.koyel) {
           // Check if any bids exist for the koyel object
           if (koyel.bids.length === 0) {
@@ -1247,7 +1247,12 @@ async function run() {
 
         // Convert the filtered data object into an array
         const resultArray = Object.values(filteredData);
-        winners.push(resultArray);
+      
+  product?.winners.push(resultArray);
+  await koyelCollection.updateOne(
+    { _id: new ObjectId(productId) },
+    { $set: product }
+  );
 
         res.status(200).json({ winners });
       } catch (error) {
