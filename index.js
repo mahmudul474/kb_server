@@ -1163,7 +1163,6 @@ async function run() {
 
         // Iterate through each koyel object and determine the winner
         const initialWinner = [];
-        const winners = [];
 
         for (const koyel of product.koyel) {
           // Check if any bids exist for the koyel object
@@ -1184,32 +1183,10 @@ async function run() {
             // Bidding has ended, select the winner if not already selected
             if (!koyel.winner) {
               koyel.winner = highestBid;
-
-              // // Send email to the winner
-              // const mailOptions = {
-              //   from: "your-email@gmail.com",
-              //   to: highestBid.bidderEmail,
-              //   subject: "Congratulations! You won the bid!",
-              //   text: "Dear winner, congratulations on winning the bid. Please proceed with the payment process."
-              // };
-
-              // transporter.sendMail(mailOptions, (error, info) => {
-              //   if (error) {
-              //     console.error("Error sending email:", error);
-              //   } else {
-              //     console.log("Email sent:", info.response);
-              //   }
-              // });
-
               // Save the updated koyel object in the product document
               await koyelCollection.updateOne(
                 { _id: new ObjectId(productId) },
-                {
-                  $set: {
-                    winners: winners,
-                    "koyel.$[koyel].winner": koyel.winner
-                  }
-                },
+                { $set: { "koyel.$[koyel].winner": koyel.winner } },
                 { arrayFilters: [{ "koyel._id": koyel._id }] }
               );
 
@@ -1217,49 +1194,48 @@ async function run() {
             } else {
               initialWinner.push(koyel.winner); // Winner already selected for this koyel object
             }
-
-  const filteredData = {};
-
-  // Restructure the data
-  initialWinner.forEach(item => {
-    const { bidderId, bidderEmail, shipping } = item;
-
-    if (!filteredData[bidderEmail]) {
-      filteredData[bidderEmail] = {
-        bidderId,
-        bidderEmail,
-        shipping,
-        winproduct: []
-      };
-    }
-
-    filteredData[bidderEmail].winproduct.push({
-      bidderNumber: item.bidderNumber,
-      koyelId: item.koyelId,
-      minimumBid: item.minimumBid,
-      currentBid: item.currentBid,
-      item: item.item,
-      spec: item.spec,
-      Thickness: item.Thickness,
-      Width: item.Width,
-      weight: item.weight,
-      TS: item.TS,
-      YP: item.YP,
-      EL: item.EL
-    });
-  });
-
-  // Convert the filtered data object into an array
-  const allwinnerconveriobj = Object.values(filteredData);
-  winners.push(allwinnerconveriobj);
-
-
           }
         }
 
-      
+        const filteredData = {};
 
-        res.status(200).json({ winners: allwinnerconveriobj });
+        // Restructure the data
+        initialWinner.forEach(item => {
+          const { bidderId, bidderEmail, shipping } = item;
+
+          if (!filteredData[bidderEmail]) {
+            filteredData[bidderEmail] = {
+              bidderId,
+              bidderEmail,
+              shipping,
+              winproduct: []
+            };
+          }
+
+          filteredData[bidderEmail].winproduct.push({
+            bidderNumber: item.bidderNumber,
+            koyelId: item.koyelId,
+            minimumBid: item.minimumBid,
+            currentBid: item.currentBid,
+            item: item.item,
+            spec: item.spec,
+            Thickness: item.Thickness,
+            Width: item.Width,
+            weight: item.weight,
+            TS: item.TS,
+            YP: item.YP,
+            EL: item.EL
+          });
+        });
+
+        // Convert the filtered data object into an array
+        const winners = Object.values(filteredData);
+        await koyelCollection.updateOne(
+          { _id: new ObjectId(productId) },
+          { $set: { winners: winners } }
+        );
+
+        res.status(200).json({ winners: winners });
       } catch (error) {
         res.status(500).json({ error: "Error retrieving winners" });
       }
