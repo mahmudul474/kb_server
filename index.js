@@ -1008,7 +1008,6 @@ async function run() {
         const product = await koyelCollection.findOne({
           _id: new ObjectId(productId)
         });
-        console.log(product);
 
         if (!product) {
           return res.status(404).json({ error: "Product not found" });
@@ -1053,7 +1052,6 @@ async function run() {
             bidderPhoto,
             bidderNumber,
             koyelId,
-            minimumBid: koyel?.minimumBid,
             currentBid: koyel?.currentBid,
             item: koyel?.item,
             spec: koyel?.spec,
@@ -1088,7 +1086,7 @@ async function run() {
     });
 
     //my bids
-    app.get("/bids/bidder/:bidderId/products/koyel", async (req, res) => {
+    app.get("/bids/bidder/:bidderId/products/koyel", async (req, res) => {node 
       try {
         const { bidderId } = req.params;
 
@@ -1104,8 +1102,6 @@ async function run() {
         res.status(500).json({ error: "Error retrieving bidder's products" });
       }
     });
-
-
 
     // app.get("/products/:productId/koyel/bids", async (req, res) => {
     //   try {
@@ -1134,17 +1130,6 @@ async function run() {
     //     res.status(500).json({ error: "Error retrieving bids" });
     //   }
     // });
-
-
-
-
-
-
-
-
-
-
-
 
     //get    winnwe
     app.get("/products/:productId/koyel/winner", async (req, res) => {
@@ -1249,7 +1234,7 @@ async function run() {
             subject: "Congratulations! You have won the auction",
             text: "Here are your winning products:",
             html: `
-        <p>Here are your winning products:</p>
+        <p>Here are your winning products</p>
         <ul>
           ${winner.winproduct
             .map(
