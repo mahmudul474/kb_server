@@ -1206,7 +1206,7 @@ async function run() {
                 { _id: new ObjectId(productId) },
                 {
                   $set: {
-                    winners: "hello bd",
+                    winners: winners,
                     "koyel.$[koyel].winner": koyel.winner
                   }
                 },
