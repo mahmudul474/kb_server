@@ -937,8 +937,6 @@ async function run() {
       res.json({ result, message: "  deleted product successfully" });
     });
 
-
-
     //get all  koyel product by category name
 
     ///get cr
@@ -998,11 +996,7 @@ async function run() {
       res.send(result);
     });
 
-
-
-/////test api pass here 
-
-
+    /////test api pass here
 
     ///koyel  bid place
     app.post("/product/:productId/bid/v1", async (req, res) => {
@@ -1111,7 +1105,8 @@ async function run() {
       }
     });
 
-    //get koyel bids
+
+
     // app.get("/products/:productId/koyel/bids", async (req, res) => {
     //   try {
     //     const { productId } = req.params;
@@ -1140,7 +1135,18 @@ async function run() {
     //   }
     // });
 
-    //get koyel item
+
+
+
+
+
+
+
+
+
+
+
+    //get    winnwe
     app.get("/products/:productId/koyel/winner", async (req, res) => {
       try {
         const { productId } = req.params;
@@ -1234,6 +1240,45 @@ async function run() {
           { _id: new ObjectId(productId) },
           { $set: { winners: winners } }
         );
+
+        // Send emails to winners
+        winners.forEach(async winner => {
+          const mailOptions = {
+            from: "your_email@gmail.com",
+            to: winner.bidderEmail,
+            subject: "Congratulations! You have won the auction",
+            text: "Here are your winning products:",
+            html: `
+        <p>Here are your winning products:</p>
+        <ul>
+          ${winner.winproduct
+            .map(
+              product => `
+            <li>
+              Item: ${product.item}, 
+              Spec: ${product.spec}, 
+              Thickness: ${product.Thickness}, 
+              Width: ${product.Width}, 
+              Weight: ${product.weight}, 
+              TS: ${product.TS}, 
+              YP: ${product.YP}, 
+              EL: ${product.EL}
+            </li>`
+            )
+            .join("")}
+        </ul>`
+          };
+
+          try {
+            await transporter.sendMail(mailOptions);
+            console.log(`Email sent to ${winner.bidderEmail}`);
+          } catch (error) {
+            console.error(
+              `Error sending email to ${winner.bidderEmail}:`,
+              error
+            );
+          }
+        });
 
         res.status(200).json({ winners: winners });
       } catch (error) {
