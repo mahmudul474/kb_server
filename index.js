@@ -1217,43 +1217,47 @@ async function run() {
             } else {
               initialWinner.push(koyel.winner); // Winner already selected for this koyel object
             }
+
+  const filteredData = {};
+
+  // Restructure the data
+  initialWinner.forEach(item => {
+    const { bidderId, bidderEmail, shipping } = item;
+
+    if (!filteredData[bidderEmail]) {
+      filteredData[bidderEmail] = {
+        bidderId,
+        bidderEmail,
+        shipping,
+        winproduct: []
+      };
+    }
+
+    filteredData[bidderEmail].winproduct.push({
+      bidderNumber: item.bidderNumber,
+      koyelId: item.koyelId,
+      minimumBid: item.minimumBid,
+      currentBid: item.currentBid,
+      item: item.item,
+      spec: item.spec,
+      Thickness: item.Thickness,
+      Width: item.Width,
+      weight: item.weight,
+      TS: item.TS,
+      YP: item.YP,
+      EL: item.EL
+    });
+  });
+
+  // Convert the filtered data object into an array
+  const allwinnerconveriobj = Object.values(filteredData);
+  winners.push(allwinnerconveriobj);
+
+
           }
         }
 
-        const filteredData = {};
-
-        // Restructure the data
-        initialWinner.forEach(item => {
-          const { bidderId, bidderEmail, shipping } = item;
-
-          if (!filteredData[bidderEmail]) {
-            filteredData[bidderEmail] = {
-              bidderId,
-              bidderEmail,
-              shipping,
-              winproduct: []
-            };
-          }
-
-          filteredData[bidderEmail].winproduct.push({
-            bidderNumber: item.bidderNumber,
-            koyelId: item.koyelId,
-            minimumBid: item.minimumBid,
-            currentBid: item.currentBid,
-            item: item.item,
-            spec: item.spec,
-            Thickness: item.Thickness,
-            Width: item.Width,
-            weight: item.weight,
-            TS: item.TS,
-            YP: item.YP,
-            EL: item.EL
-          });
-        });
-
-        // Convert the filtered data object into an array
-        const allwinnerconveriobj = Object.values(filteredData);
-        winners.push(...allwinnerconveriobj);
+      
 
         res.status(200).json({ winners: allwinnerconveriobj });
       } catch (error) {
