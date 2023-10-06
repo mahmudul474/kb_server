@@ -1232,22 +1232,10 @@ async function run() {
             text: "Here are your winning products:",
             html: `
         
-<style>
-    .company{
-        display: flex;
-        flex-direction: column;
-        line-height: 1px;
-    }
-    .header{
-        display: flex;
-        justify-content: space-between;
-        justify-items: center;
-    }
 
-</style>
 <div>
-   <div class="header">
-   <h1>DH S&T</h1>
+   <div >
+   <h1 style="color: red;">DH S&T</h1>
    <div class="company">
     <h2>DONG HAENG STEEL & TRADING CO., LTD
 </h2>
