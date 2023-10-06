@@ -1033,7 +1033,7 @@ async function run() {
             bidderNumber,
             shipping,
             businessName,
-           businessAddress
+            businessAddress
           } = koyelBid;
 
           // Find the koyel object by ID
@@ -1056,7 +1056,7 @@ async function run() {
             businessName,
             businessAddress,
             koyelId,
-            currentBid: koyel?.currentBid,
+            currentBid: bidAmount,
             item: koyel?.item,
             spec: koyel?.spec,
             Thickness: koyel?.Thickness,
@@ -1211,7 +1211,9 @@ async function run() {
               businessName,
               businessAddress,
               winproduct: [],
-              total: null
+              total: 0,
+              totalWithShipping: 0,
+              totalWeight: 0
             };
           }
 
@@ -1229,26 +1231,26 @@ async function run() {
             YP: item.YP,
             EL: item.EL
           });
-          filteredData[bidderEmail].total.push({
-            currentBid: item.currentBid * item.weight,
-          });
+          // Calculate the total for the bidder by accumulating the product of currentBid and weight
+          filteredData[bidderEmail].total += item.currentBid * item.weight;
+          filteredData[bidderEmail].totalWithShipping +=
+            item.currentBid * item.weight +
+            shipping?.shippingCost * item.weight;
+          filteredData[bidderEmail].totalWeight += item.weight;
         });
 
         // Convert the filtered data object into an array
-
+        let emailsSent = true;
         const winners = Object.values(filteredData);
-
-        console.log(winners);
 
         // Send emails to winners
 
-        if (product?.emailsSent === false) {
-          winners.forEach(async winner => {
-            const mailOptions = {
-              from: "auctionKB@gmail.com",
-              to: winner.bidderEmail,
-              subject: "Congratulations! You have won the auction",
-              html: `
+        winners.forEach(async winner => {
+          const mailOptions = {
+            from: "auctionKB@gmail.com",
+            to: winner.bidderEmail,
+            subject: "Congratulations! You have won the auction",
+            html: `
         
 
  
@@ -1274,11 +1276,23 @@ async function run() {
             .join("")}
         </ul>
         
+
+
+
+  <h2>Shipping <h2>
+
+  <h4>Landing: <h3> ${winner?.shipping?.landing}</h3>
+  <h4>shipment Type: <h3> ${winner?.shipping?.shippingType}</h3>
+  <h4>shipment Cost: <h3> ${winner?.shipping?.shippingCost + "$"} per KG</h3>
+
+
+  <h1> Total : ${winner?.total + "$"} </h1>
+   <h4>shipment Cost: <h3> ${winner?.shipping?.shippingCost + "$"}per KG</h3>
+    <h1> Total Weight : ${winner?.totalWeight + "KG"} </h1>
+   <h4>Sub Total : <h3> ${winner?.totalWithShipping + "$"}</h3>
         <div>
-   <div style="  display: flex;
-        justify-content: center;
-        justify-items: start;">
-        <div style="margin-right: 20px;"><h1> DH S&T</h1></div>
+   <div 
+        <div ><h1> DH S&T</h1></div>
   
    <div style="  display: flex;
         flex-direction: column;
@@ -1296,7 +1310,7 @@ async function run() {
 
  <div >
 <p>CONTRACT NO : DH-230918 </p>
-<p>DATE:${bdTime}
+<p>DATE:
 </p>
 <p>BUYER :${winner?.businessName},
             ${winner?.businessAddress}
@@ -1319,12 +1333,6 @@ async function run() {
 <p>g. Remark : Secondary Quality, as per packing list and photos. No Claim, No MTC THEORITICAL WEIGHT NOT ACCEPTABLE.
     ORIGINAL NET WEIGHT</p>
 
-
-
-
-
-
-
 <p style="margin-top: 20px; font-weight: bold ; font-size:36px;" >h. Seller's Bank Detail</p>
 <p style="font-size:16px; ">Name : INDUSTRIAL BANK OF KOREA , SIHWA KONGDAN</p>
 <p style="font-size:16px; "> Address : 50, ULCHIRO 2-GA, CHUNG-GU , SEOUL, SOUTH KOREA</p>
@@ -1333,10 +1341,6 @@ async function run() {
 <p style="font-size:16px; ">Signed by SELLER signed by BUYER</p>
 <p style="font-size:16px; ">DH S&T</p>
 <p style="font-size:16px; ">As fer packing list CFR ICD</p>
-
-
-
-
  <div style="display: flex; margin-top: 60px; justify-content: space-between; justify-items: center;">
     <div> <img src="https://i.ibb.co/2jbvWwM/Screenshot-16.png"/></div>
     <div>
@@ -1351,29 +1355,24 @@ async function run() {
         
       
         `
-            };
+          };
 
-            try {
-              await transporter.sendMail(mailOptions);
+          try {
+            await transporter.sendMail(mailOptions);
 
-              console.log(`Email sent to ${winner.bidderEmail}`);
-            } catch (error) {
-              console.error(
-                `Error sending email to ${winner.bidderEmail}:`,
-                error
-              );
-            }
-          });
-          await koyelCollection.updateOne(
-            { _id: new ObjectId(productId) },
-            { $set: { emailsSent: emailsSent } }
-          );
-        }
+            console.log(`Email sent to ${winner.bidderEmail}`);
+          } catch (error) {
+            console.error(
+              `Error sending email to ${winner.bidderEmail}:`,
+              error
+            );
+          }
+        });
 
         //upd product
         await koyelCollection.updateOne(
           { _id: new ObjectId(productId) },
-          { $set: { winners: winners,} }
+          { $set: { winners: winners } }
         );
 
         res.status(200).json({ winners: winners });
@@ -1421,6 +1420,28 @@ async function run() {
         res.status(500).json({ error: "Error retrieving winning products" });
       }
     });
+
+    app.get("/user/wins/:bidderId", async (req, res) => {
+      try {
+        const { bidderId } = req.params;
+        // Find all products that have bids from the bidder
+        const products = await koyelCollection.find({}).toArray();
+
+        const wins = products.flatMap(product =>
+          product?.winners?.filter(winner => winner.bidderId === bidderId)
+        );
+
+        res.json({ wins: wins });
+      } catch (error) {
+        res.status(500).json({ error: "Bids not Found " });
+      }
+    });
+
+
+
+
+
+
     ///get winner product img and  product name
 
     app.get("/products/koyel-item/item/:id", async (req, res) => {
