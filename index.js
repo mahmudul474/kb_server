@@ -1195,14 +1195,23 @@ async function run() {
 
         // Restructure the data
         initialWinner.forEach(item => {
-          const { bidderId, bidderEmail, shipping } = item;
+          const {
+            bidderId,
+            bidderEmail,
+            shipping,
+            businessName,
+            businessAddress
+          } = item;
 
           if (!filteredData[bidderEmail]) {
             filteredData[bidderEmail] = {
               bidderId,
               bidderEmail,
               shipping,
-              winproduct: []
+              businessName,
+              businessAddress,
+              winproduct: [],
+              total: null
             };
           }
 
@@ -1220,11 +1229,16 @@ async function run() {
             YP: item.YP,
             EL: item.EL
           });
+          filteredData[bidderEmail].total.push({
+            currentBid: item.currentBid * item.weight,
+          });
         });
 
         // Convert the filtered data object into an array
-        let emailsSent = true;
+
         const winners = Object.values(filteredData);
+
+        console.log(winners);
 
         // Send emails to winners
 
@@ -1284,42 +1298,13 @@ async function run() {
 <p>CONTRACT NO : DH-230918 </p>
 <p>DATE:${bdTime}
 </p>
-<p>BUYER :SSI ENTERPRISE
-NAWSHAD SHEET MARKET, PURBO BOND,
-DAKPARA 04, KERANIGANJ, DHAKA</p>
+<p>BUYER :${winner?.businessName},
+            ${winner?.businessAddress}
+ </p>
  </div>
  <p>We are glad to inform this to you
 </p>
-    <table style="width: 100%; border-collapse: collapse;">
-        <thead>
-            <tr>
-                <th style="border: 1px solid black; padding: 8px; background-color: #f2f2f2;">KIND</th>
-                <th style="border: 1px solid black; padding: 8px; background-color: #f2f2f2;">SIZE : T/W/L
-                (MM)</th>
-                <th style="border: 1px solid black; padding: 8px; background-color: #f2f2f2;">Q'TY
-                (KG)
-</th>
-            </tr>
-                <th style="border: 1px solid black; padding: 8px; background-color: #f2f2f2;">Unit Price/MT
-                (USD)</th>
-                <th style="border: 1px solid black; padding: 8px; background-color: #f2f2f2;">Total Amount
-                (USD)</th>
-                <th style="border: 1px solid black; padding: 8px; background-color: #f2f2f2;">REMARKS</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td style="border: 1px solid black; padding: 8px;">Data 1</td>
-                <td style="border: 1px solid black; padding: 8px;">Data 2</td>
-                <td style="border: 1px solid black; padding: 8px;">Data 3</td>
-            </tr>
-            <tr>
-                <td style="border: 1px solid black; padding: 8px;">Data 4</td>
-                <td style="border: 1px solid black; padding: 8px;">Data 5</td>
-                <td style="border: 1px solid black; padding: 8px;">Data 6</td>
-            </tr>
-        </tbody>
-    </table>
+  
 
 
 <p>** Q'TY and PRICE, TOTAL AMOUNT : +/- 10%,</p>
@@ -1379,10 +1364,10 @@ DAKPARA 04, KERANIGANJ, DHAKA</p>
               );
             }
           });
-           await koyelCollection.updateOne(
-             { _id: new ObjectId(productId) },
-             { $set: { emailsSent: emailsSent } }
-           );
+          await koyelCollection.updateOne(
+            { _id: new ObjectId(productId) },
+            { $set: { emailsSent: emailsSent } }
+          );
         }
 
         //upd product
