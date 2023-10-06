@@ -1137,7 +1137,8 @@ async function run() {
         const { productId } = req.params;
         // Find the product by its ID in the database
         const product = await koyelCollection.findOne({
-          _id: new ObjectId(productId)
+          _id: new ObjectId(productId),
+          emailSent: { $ne: true } // Check if email has not been sent
         });
 
         if (!product) {
@@ -1219,19 +1220,9 @@ async function run() {
         });
 
         // Convert the filtered data object into an array
- const  emailsSent=true
+        let emailsSent = false;
         const winners = Object.values(filteredData);
-        await koyelCollection.updateOne(
-          { _id: new ObjectId(productId) },
-          { $set: { winners: winners, emailsSent: emailsSent } }
-        );
-        
-        // Check if emails have already been sent for this product
-        if (product.emailsSent) {
-          return res
-            .status(400)
-            .json({ error: "Emails already sent for this product" });
-        }
+
         // Send emails to winners
         winners.forEach(async winner => {
           const mailOptions = {
@@ -1297,20 +1288,29 @@ async function run() {
         
         
         
-        
+      
         `
           };
 
-          try {
-            await transporter.sendMail(mailOptions);
-            console.log(`Email sent to ${winner.bidderEmail}`);
-          } catch (error) {
-            console.error(
-              `Error sending email to ${winner.bidderEmail}:`,
-              error
-            );
+          if (!emailsSent) {
+            try {
+              await transporter.sendMail(mailOptions);
+              emailsSent = true;
+              console.log(`Email sent to ${winner.bidderEmail}`);
+            } catch (error) {
+              console.error(
+                `Error sending email to ${winner.bidderEmail}:`,
+                error
+              );
+            }
           }
         });
+
+        //upd product
+        await koyelCollection.updateOne(
+          { _id: new ObjectId(productId) },
+          { $set: { winners: winners, emailsSent: emailsSent } }
+        );
 
         res.status(200).json({ winners: winners });
       } catch (error) {
