@@ -1086,20 +1086,20 @@ async function run() {
     });
 
     //my bids
-    app.get("/bids/bidder/:bidderId/products/koyel", async (req, res) => {node 
+    app.get("/user/bids/:bidderId", async (req, res) => {
       try {
         const { bidderId } = req.params;
-
         // Find all products that have bids from the bidder
-        const products = await koyelCollection
-          .find({
-            "bids.bidderId": bidderId
-          })
-          .toArray();
+        const products = await koyelCollection.find({}).toArray();
 
-        res.status(200).json({ products });
+        const bids = products.flatMap(product =>
+          product?.bids?.filter(bid => bid.bidderId === bidderId)
+        ); // Flatten the array
+        console.log(bids);
+
+        res.json({ bids: bids });
       } catch (error) {
-        res.status(500).json({ error: "Error retrieving bidder's products" });
+        res.status(500).json({ error: "Bids not Found " });
       }
     });
 
