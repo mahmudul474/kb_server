@@ -1220,7 +1220,7 @@ async function run() {
         });
 
         // Convert the filtered data object into an array
-        let emailsSent;
+        let emailsSent = true;
         const winners = Object.values(filteredData);
 
         // Send emails to winners
@@ -1280,10 +1280,10 @@ async function run() {
         `
           };
 
-          if (!emailsSent) {
+          if (product?.emailsSent!==true) {
             try {
               await transporter.sendMail(mailOptions);
-              emailsSent = true;
+             
               console.log(`Email sent to ${winner.bidderEmail}`);
             } catch (error) {
               console.error(
