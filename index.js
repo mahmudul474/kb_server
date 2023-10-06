@@ -1220,7 +1220,7 @@ async function run() {
         });
 
         // Convert the filtered data object into an array
-        let emailsSent = false;
+        let emailsSent;
         const winners = Object.values(filteredData);
 
         // Send emails to winners
