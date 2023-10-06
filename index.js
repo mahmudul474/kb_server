@@ -1240,8 +1240,43 @@ async function run() {
             subject: "Congratulations! You have won the auction",
             text: "Here are your winning products:",
             html: `
-        <p>Here are your winning products</p>
+        
+<style>
+    .company{
+        display: flex;
+        flex-direction: column;
+        line-height: 1px;
+    }
+    .header{
+        display: flex;
+        justify-content: space-between;
+        justify-items: center;
+    }
+
+</style>
+<div>
+   <div class="header">
+   <h1>DH S&T</h1>
+   <div class="company">
+    <h2>DONG HAENG STEEL & TRADING CO., LTD
+</h2>
+<p>405 , 110-7 , OKGIL-RO, BUCHEON, GYEONGGI-DO, KOREA
+</p>
+<p>TEL : +82-2-6231-1219 </p>
+<p>FAX : +82 -2-6231 -1218
+
+   </div>
+   </div>
+
+
+
+
+</div>
+
+
+
         <ul>
+     <p>Here are your winning products</p>
           ${winner.winproduct
             .map(
               product => `
@@ -1257,7 +1292,13 @@ async function run() {
             </li>`
             )
             .join("")}
-        </ul>`
+        </ul>
+        
+        
+        
+        
+        
+        `
           };
 
           try {
