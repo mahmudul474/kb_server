@@ -1379,12 +1379,16 @@ DAKPARA 04, KERANIGANJ, DHAKA</p>
               );
             }
           });
+           await koyelCollection.updateOne(
+             { _id: new ObjectId(productId) },
+             { $set: { emailsSent: emailsSent } }
+           );
         }
 
         //upd product
         await koyelCollection.updateOne(
           { _id: new ObjectId(productId) },
-          { $set: { winners: winners, emailsSent: emailsSent } }
+          { $set: { winners: winners,} }
         );
 
         res.status(200).json({ winners: winners });
