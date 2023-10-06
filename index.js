@@ -1206,7 +1206,10 @@ async function run() {
             bidderEmail,
             shipping,
             businessName,
-            businessAddress
+            businessAddress,
+            productName,
+            productID,
+            productPhoto
           } = item;
 
           if (!filteredData[bidderEmail]) {
@@ -1216,6 +1219,9 @@ async function run() {
               shipping,
               businessName,
               businessAddress,
+              productName,
+              productID,
+              productPhoto,
               winproduct: [],
               total: 0,
               totalWithShipping: 0,
