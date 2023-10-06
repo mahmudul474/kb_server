@@ -985,7 +985,7 @@ async function run() {
       const bdTime = DateTime.now().setZone("Asia/Dhaka");
       const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
 
-      res.send(formattedDate);
+      res.send(bdTime);
     });
 
     ///get singel koyel item
@@ -1031,7 +1031,9 @@ async function run() {
             koyel,
             bidderPhoto,
             bidderNumber,
-            shipping
+            shipping,
+            businessName,
+           businessAddress
           } = koyelBid;
 
           // Find the koyel object by ID
@@ -1051,6 +1053,8 @@ async function run() {
             bidderId,
             bidderPhoto,
             bidderNumber,
+            businessName,
+            businessAddress,
             koyelId,
             currentBid: koyel?.currentBid,
             item: koyel?.item,
@@ -1137,8 +1141,7 @@ async function run() {
         const { productId } = req.params;
         // Find the product by its ID in the database
         const product = await koyelCollection.findOne({
-          _id: new ObjectId(productId),
-          emailSent: { $ne: true } // Check if email has not been sent
+          _id: new ObjectId(productId)
         });
 
         if (!product) {
@@ -1224,33 +1227,17 @@ async function run() {
         const winners = Object.values(filteredData);
 
         // Send emails to winners
-        winners.forEach(async winner => {
-          const mailOptions = {
-            from: "auctionKB@gmail.com",
-            to: winner.bidderEmail,
-            subject: "Congratulations! You have won the auction",
-            text: "Here are your winning products:",
-            html: `
+
+        if (product?.emailsSent === false) {
+          winners.forEach(async winner => {
+            const mailOptions = {
+              from: "auctionKB@gmail.com",
+              to: winner.bidderEmail,
+              subject: "Congratulations! You have won the auction",
+              html: `
         
 
-<div>
-   <div >
-   <h1 style="color: red;">DH S&T</h1>
-   <div class="company">
-    <h2>DONG HAENG STEEL & TRADING CO., LTD
-</h2>
-<p>405 , 110-7 , OKGIL-RO, BUCHEON, GYEONGGI-DO, KOREA
-</p>
-<p>TEL : +82-2-6231-1219 </p>
-<p>FAX : +82 -2-6231 -1218
-
-   </div>
-   </div>
-
-
-
-
-</div>
+ 
 
 
 
@@ -1273,14 +1260,114 @@ async function run() {
             .join("")}
         </ul>
         
-        
+        <div>
+   <div style="  display: flex;
+        justify-content: center;
+        justify-items: start;">
+        <div style="margin-right: 20px;"><h1> DH S&T</h1></div>
+  
+   <div style="  display: flex;
+        flex-direction: column;
+        line-height: 1px;">
+    <h2>DONG HAENG STEEL & TRADING CO., LTD
+</h2>
+<p>405 , 110-7 , OKGIL-RO, BUCHEON, GYEONGGI-DO, KOREA
+</p>
+<p>TEL : +82-2-6231-1219 </p>
+<p>FAX : +82 -2-6231 -1218
+
+   </div>
+  
+   </div><hr />
+
+ <div >
+<p>CONTRACT NO : DH-230918 </p>
+<p>DATE:${bdTime}
+</p>
+<p>BUYER :SSI ENTERPRISE
+NAWSHAD SHEET MARKET, PURBO BOND,
+DAKPARA 04, KERANIGANJ, DHAKA</p>
+ </div>
+ <p>We are glad to inform this to you
+</p>
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr>
+                <th style="border: 1px solid black; padding: 8px; background-color: #f2f2f2;">KIND</th>
+                <th style="border: 1px solid black; padding: 8px; background-color: #f2f2f2;">SIZE : T/W/L
+                (MM)</th>
+                <th style="border: 1px solid black; padding: 8px; background-color: #f2f2f2;">Q'TY
+                (KG)
+</th>
+            </tr>
+                <th style="border: 1px solid black; padding: 8px; background-color: #f2f2f2;">Unit Price/MT
+                (USD)</th>
+                <th style="border: 1px solid black; padding: 8px; background-color: #f2f2f2;">Total Amount
+                (USD)</th>
+                <th style="border: 1px solid black; padding: 8px; background-color: #f2f2f2;">REMARKS</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td style="border: 1px solid black; padding: 8px;">Data 1</td>
+                <td style="border: 1px solid black; padding: 8px;">Data 2</td>
+                <td style="border: 1px solid black; padding: 8px;">Data 3</td>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 8px;">Data 4</td>
+                <td style="border: 1px solid black; padding: 8px;">Data 5</td>
+                <td style="border: 1px solid black; padding: 8px;">Data 6</td>
+            </tr>
+        </tbody>
+    </table>
+
+
+<p>** Q'TY and PRICE, TOTAL AMOUNT : +/- 10%,</p>
+<p>Conditions The remaining amount of payment should be paid by TT as soon as sign the agreement. and; then LC should be
+    open within a week.</p>
+<p>a. Shipment : Approximately 2 weeks after receiving of LC</p>
+<p>b. Paymenet : Irrevocable LC at sight to Seller's bank, within 2 weeks after signing date/</p>
+<p>c. Price term : CFR ICD KAMALAPUR PORT</p>
+<p>d. effective : After signature</p>
+<p>e. Packing : Export standard packing</p>
+<p>f. Required documents : BL, INV, PL, CO</p>
+<p>g. Remark : Secondary Quality, as per packing list and photos. No Claim, No MTC THEORITICAL WEIGHT NOT ACCEPTABLE.
+    ORIGINAL NET WEIGHT</p>
+
+
+
+
+
+
+
+<p style="margin-top: 20px; font-weight: bold ; font-size:36px;" >h. Seller's Bank Detail</p>
+<p style="font-size:16px; ">Name : INDUSTRIAL BANK OF KOREA , SIHWA KONGDAN</p>
+<p style="font-size:16px; "> Address : 50, ULCHIRO 2-GA, CHUNG-GU , SEOUL, SOUTH KOREA</p>
+<p style="font-size:16px; ">Account No. 378-148066-56-00014 (SWIFT CORD : IBKOKRSE)</p>
+<p style="font-size:16px; ">Account Holder : DONG HAENG STEEL & TRADING CO., LTD</p>
+<p style="font-size:16px; ">Signed by SELLER signed by BUYER</p>
+<p style="font-size:16px; ">DH S&T</p>
+<p style="font-size:16px; ">As fer packing list CFR ICD</p>
+
+
+
+
+ <div style="display: flex; margin-top: 60px; justify-content: space-between; justify-items: center;">
+    <div> <img src="https://i.ibb.co/2jbvWwM/Screenshot-16.png"/></div>
+    <div>
+        <h3>signed by BUYER</h3>
+        <hr/>
+    </div>
+ </div>
+
+
+</div>
         
         
       
         `
-          };
+            };
 
-          if (product?.emailsSent !== true) {
             try {
               await transporter.sendMail(mailOptions);
 
@@ -1291,8 +1378,8 @@ async function run() {
                 error
               );
             }
-          }
-        });
+          });
+        }
 
         //upd product
         await koyelCollection.updateOne(
@@ -1305,8 +1392,6 @@ async function run() {
         res.status(500).json({ error: "Error retrieving winners" });
       }
     });
-
-    
 
     ////get  my win
     app.get("/my-wins/:userId/koyel", async (req, res) => {
