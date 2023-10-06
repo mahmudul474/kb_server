@@ -1033,7 +1033,10 @@ async function run() {
             bidderNumber,
             shipping,
             businessName,
-            businessAddress
+            businessAddress,
+            productName,
+            productID,
+            productPhoto
           } = koyelBid;
 
           // Find the koyel object by ID
@@ -1055,6 +1058,9 @@ async function run() {
             bidderNumber,
             businessName,
             businessAddress,
+            productName,
+            productID,
+            productPhoto,
             koyelId,
             currentBid: bidAmount,
             item: koyel?.item,
@@ -1192,7 +1198,7 @@ async function run() {
         }
 
         const filteredData = {};
-
+        console.log(initialWinner);
         // Restructure the data
         initialWinner.forEach(item => {
           const {
