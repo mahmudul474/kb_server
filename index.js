@@ -1280,10 +1280,10 @@ async function run() {
         `
           };
 
-          if (product?.emailsSent!==true) {
+          if (product?.emailsSent !== true) {
             try {
               await transporter.sendMail(mailOptions);
-             
+
               console.log(`Email sent to ${winner.bidderEmail}`);
             } catch (error) {
               console.error(
