@@ -1219,13 +1219,19 @@ async function run() {
         });
 
         // Convert the filtered data object into an array
-   
+ const  emailsSent=true
         const winners = Object.values(filteredData);
         await koyelCollection.updateOne(
           { _id: new ObjectId(productId) },
           { $set: { winners: winners, emailsSent: emailsSent } }
         );
-
+        
+        // Check if emails have already been sent for this product
+        if (product.emailsSent) {
+          return res
+            .status(400)
+            .json({ error: "Emails already sent for this product" });
+        }
         // Send emails to winners
         winners.forEach(async winner => {
           const mailOptions = {
