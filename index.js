@@ -1008,6 +1008,7 @@ async function run() {
             bidderEmail,
             bidderId,
             koyel,
+            shipping,
             bidderPhoto,
             bidderNumber,
             businessName,
@@ -1026,6 +1027,7 @@ async function run() {
           // Create a new bid object
           const newBid = {
             bidAmount,
+            shipping,
             bidderName,
             bidderEmail,
             bidderId,
@@ -1217,12 +1219,6 @@ async function run() {
             to: winner.bidderEmail,
             subject: "Congratulations! You have won the auction",
             html: `
-        
-
- 
-
-
-
         <ul>
      <p>Here are your winning products</p>
           ${winner.winproduct
@@ -1340,8 +1336,7 @@ async function run() {
       }
     });
 
-  
-//user bid win 
+    //user bid win
     app.get("/user/wins/:bidderId", async (req, res) => {
       try {
         const { bidderId } = req.params;
@@ -1358,9 +1353,7 @@ async function run() {
       }
     });
 
-
-
-    ///bid close  dth  bid 
+    ///bid close  dth  bid
 
     app.get("/products/koyel-item/closed-bids/with-bids", async (req, res) => {
       try {
@@ -1400,14 +1393,6 @@ async function run() {
       }
     });
 
-
-
-
-
-
-
-
-
     ///get winner product img and  product name
 
     app.get("/products/koyel-item/item/:id", async (req, res) => {
@@ -1435,46 +1420,45 @@ async function run() {
     ///post koyel item   payment
 
     app.post("/koyel-item/payment/:id", async (req, res) => {
-      const productID = req.params.id;
-      const { paymentDetails, items } = req.body;
+      // const productID = req.params.id;
+      // const { paymentDetails, items } = req.body;
 
-      const payment = await koyelitempaymentColletion.insertOne({
-        paymentDetails,
-        productID,
-        bidderId: paymentDetails.bidderId,
-        koyel: items,
-        status: "pending"
-      });
+ console.log(req.body)
 
-      const product = await koyelCollection.findOne({
-        _id: new ObjectId(productID)
-      });
+      // const payment = await koyelitempaymentColletion.insertOne({
+      //   paymentDetails,
+      //   productID,
+      //   bidderId: paymentDetails.bidderId,
+      //   koyel: items,
+      //   status: "pending"
+      // });
 
-      if (!product) {
-        return res.status(404).json({ error: "Product not found" });
-      }
+      // const product = await koyelCollection.findOne({
+      //   _id: new ObjectId(productID)
+      // });
 
-      for (const item of items) {
-        const { koyelId } = item;
+      // if (!product) {
+      //   return res.status(404).json({ error: "Product not found" });
+      // }
 
-        const koyelItem = product.koyel.find(item => item._id === koyelId);
+      // for (const item of items) {
+      //   const { koyelId } = item;
 
-        if (!koyelItem) {
-          return res
-            .status(404)
-            .json({ error: `Koyel object with ID ${koyelId} not found` });
-        }
+      //   const koyelItem = product.koyel.find(item => item._id === koyelId);
 
-        koyelItem.payment = "pending";
-        koyelItem.status = "pending";
-      }
-
-      await koyelCollection.updateOne(
-        { _id: new ObjectId(productID) },
-        { $set: { koyel: product.koyel } }
-      );
-
-      res.json({ payment, message: "Payment details updated successfully" });
+      //   if (!koyelItem) {
+      //     return res
+      //       .status(404)
+      //       .json({ error: `Koyel object with ID ${koyelId} not found` });
+      //   }
+      //   koyelItem.payment = "pending";
+      //   koyelItem.status = "pending";
+      // }
+      // await koyelCollection.updateOne(
+      //   { _id: new ObjectId(productID) },
+      //   { $set: { koyel: product.koyel } }
+      // );
+      // res.json({ payment, message: "Payment details updated successfully" });
     });
 
     /// get my koyel item  payment
