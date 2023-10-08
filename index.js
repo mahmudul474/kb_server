@@ -1150,10 +1150,14 @@ async function run() {
           const {
             bidderId,
             bidderEmail,
+            bidderName,
+            bidderPhoto,
+            bidderNumber,
             businessName,
             businessAddress,
             productName,
             productID,
+            shipping,
             productPhoto
           } = item;
 
@@ -1161,11 +1165,17 @@ async function run() {
             filteredData[bidderEmail] = {
               bidderId,
               bidderEmail,
+              bidderName,
+              bidderPhoto,
+              bidderNumber,
+              businessName,
+              businessAddress,
               businessName,
               businessAddress,
               productName,
               productID,
               productPhoto,
+              shipping,
               winproduct: [],
               total: 0,
               totalWeight: 0,
