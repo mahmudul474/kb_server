@@ -959,28 +959,7 @@ async function run() {
       res.send(result);
     });
 
-    ///bid close with  bidding
-    app.get("/products/koyel-item/closed-bids/with-bids", async (req, res) => {
-      try {
-        const bdTime = DateTime.now().setZone("Asia/Dhaka");
-        const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
-        const products = await koyelCollection
-          .find({
-            endBiddingTime: { $lt: formattedDate }
-          })
-          .toArray();
-
-        const result = products.filter(
-          product => product.bids.length !== 0 || product.bids.length > 0
-        );
-        res.send(result);
-      } catch (error) {
-        res.status(500).json({ error: "Error retrieving products" });
-      }
-    });
-
     //     //// time testing
-
     app.get("/time", async (req, res) => {
       const bdTime = DateTime.now().setZone("Asia/Dhaka");
       const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
@@ -1001,7 +980,7 @@ async function run() {
     ///koyel  bid place
     app.post("/product/:productId/bid/v1", async (req, res) => {
       const { productId } = req.params;
-      const { koyelBids, bidder, createBids } = req.body;
+      const { koyelBids, createBids } = req.body;
 
       try {
         // Find the product by ID
@@ -1031,23 +1010,19 @@ async function run() {
             koyel,
             bidderPhoto,
             bidderNumber,
-            shipping,
             businessName,
             businessAddress,
             productName,
             productID,
             productPhoto
           } = koyelBid;
-
           // Find the koyel object by ID
           const koyelitem = product.koyel.find(koyel => koyel._id === koyelId);
-
           if (!koyelitem) {
             return res
               .status(404)
               .json({ error: `Koyel object with ID ${koyelId} not found` });
           }
-
           // Create a new bid object
           const newBid = {
             bidAmount,
@@ -1070,8 +1045,7 @@ async function run() {
             weight: koyel?.weight,
             TS: koyel?.TS,
             YP: koyel?.YP,
-            EL: koyel?.EL,
-            shipping
+            EL: koyel?.EL
           };
 
           // Add the new bid to the koyel object's bids array
@@ -1113,35 +1087,7 @@ async function run() {
       }
     });
 
-    // app.get("/products/:productId/koyel/bids", async (req, res) => {
-    //   try {
-    //     const { productId } = req.params;
-
-    //     // Find the product by its ID in the database
-    //     const product = await productCollection.findOne({
-    //       _id: new ObjectId(productId)
-    //     });
-
-    //     if (!product) {
-    //       return res.status(404).json({ error: "Product not found" });
-    //     }
-
-    //     // Create an array to store the bids for each koyel object
-    //     const bids = [];
-
-    //     // Iterate through each koyel object and retrieve the bids
-    //     for (const koyel of product.koyel) {
-    //       const koyelBids = koyel.bids;
-    //       bids.push(koyelBids);
-    //     }
-
-    //     res.status(200).json({ bids });
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving bids" });
-    //   }
-    // });
-
-    //get    winnwe
+    //get  winner
     app.get("/products/:productId/koyel/winner", async (req, res) => {
       try {
         const { productId } = req.params;
@@ -1204,7 +1150,6 @@ async function run() {
           const {
             bidderId,
             bidderEmail,
-            shipping,
             businessName,
             businessAddress,
             productName,
@@ -1216,7 +1161,6 @@ async function run() {
             filteredData[bidderEmail] = {
               bidderId,
               bidderEmail,
-              shipping,
               businessName,
               businessAddress,
               productName,
@@ -1224,8 +1168,8 @@ async function run() {
               productPhoto,
               winproduct: [],
               total: 0,
-              totalWithShipping: 0,
-              totalWeight: 0
+              totalWeight: 0,
+              averagePerKgPrice: 0
             };
           }
 
@@ -1245,10 +1189,10 @@ async function run() {
           });
           // Calculate the total for the bidder by accumulating the product of currentBid and weight
           filteredData[bidderEmail].total += item.currentBid * item.weight;
-          filteredData[bidderEmail].totalWithShipping +=
-            item.currentBid * item.weight +
-            shipping?.shippingCost * item.weight;
           filteredData[bidderEmail].totalWeight += item.weight;
+          filteredData[bidderEmail].averagePerKgPrice =
+            filteredData[bidderEmail].total /
+            filteredData[bidderEmail].totalWeight;
         });
 
         // Convert the filtered data object into an array
@@ -1291,17 +1235,10 @@ async function run() {
 
 
 
-  <h2>Shipping <h2>
-
-  <h4>Landing: <h3> ${winner?.shipping?.landing}</h3>
-  <h4>shipment Type: <h3> ${winner?.shipping?.shippingType}</h3>
-  <h4>shipment Cost: <h3> ${winner?.shipping?.shippingCost + "$"} per KG</h3>
 
 
   <h1> Total : ${winner?.total + "$"} </h1>
-   <h4>shipment Cost: <h3> ${winner?.shipping?.shippingCost + "$"}per KG</h3>
     <h1> Total Weight : ${winner?.totalWeight + "KG"} </h1>
-   <h4>Sub Total : <h3> ${winner?.totalWithShipping + "$"}</h3>
         <div>
    <div 
         <div ><h1> DH S&T</h1></div>
@@ -1393,46 +1330,8 @@ async function run() {
       }
     });
 
-    ////get  my win
-    app.get("/my-wins/:userId/koyel", async (req, res) => {
-      try {
-        const userId = req.params.userId; // Get the user ID from the route parameter
-        const userEmail = req.query.email; // Get the client email from the query parameter
-
-        // Find the user's winning products based on the provided user ID and email
-        const winningProducts = await koyelCollection
-          .aggregate([
-            {
-              $match: {
-                "winners.bidderId": userId,
-                "winners.bidderEmail": userEmail
-              }
-            },
-            {
-              $project: {
-                winners: {
-                  $filter: {
-                    input: "$winners",
-                    as: "winner",
-                    cond: {
-                      $and: [
-                        { $eq: ["$$winner.bidderId", userId] },
-                        { $eq: ["$$winner.bidderEmail", userEmail] }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          ])
-          .toArray();
-
-        res.send(winningProducts);
-      } catch (error) {
-        res.status(500).json({ error: "Error retrieving winning products" });
-      }
-    });
-
+  
+//user bid win 
     app.get("/user/wins/:bidderId", async (req, res) => {
       try {
         const { bidderId } = req.params;
@@ -1448,6 +1347,51 @@ async function run() {
         res.status(500).json({ error: "Bids not Found " });
       }
     });
+
+
+
+    ///bid close  dth  bid 
+
+    app.get("/products/koyel-item/closed-bids/with-bids", async (req, res) => {
+      try {
+        const bdTime = DateTime.now().setZone("Asia/Dhaka");
+        const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
+        const products = await koyelCollection
+          .find({
+            endBiddingTime: { $lt: formattedDate }
+          })
+          .toArray();
+
+        const result = products.filter(
+          product => product.bids.length !== 0 || product.bids.length > 0
+        );
+        res.send(result);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving products" });
+      }
+    });
+    ////bid close with no bid
+    app.get("/products/koyel-item/closed-bids/no-bids", async (req, res) => {
+      try {
+        const bdTime = DateTime.now().setZone("Asia/Dhaka");
+        const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
+        const products = await koyelCollection
+          .find({
+            endBiddingTime: { $lt: formattedDate }
+          })
+          .toArray();
+
+        const result = products.filter(
+          product => product.bids.length !== 0 || product.bids.length > 0
+        );
+        res.send(result);
+      } catch (error) {
+        res.status(500).json({ error: "Error retrieving products" });
+      }
+    });
+
+
+
 
 
 
