@@ -1432,14 +1432,20 @@ async function run() {
 
       const payment = await koyelitempaymentColletion.insertOne({
         productId: productID,
+        productPhoto: paymentinfo.products?.productPhoto,
+        productName: paymentinfo.products?.productName,
+        totalWeight: paymentinfo.products?.totalWeight,
+        total: paymentinfo.products?.total,
+        averagePerKgPrice: paymentinfo.products?.averagePerKgPrice,
         bidderId: paymentinfo.products?.bidderId,
+        bidderNumber: paymentinfo.products?.bidderNumber,
         bidderEmail: paymentinfo.products?.bidderEmail,
         bidderName: paymentinfo.products?.bidderName,
         bidderPhoto: paymentinfo.products?.bidderPhoto,
         paymentDetails: paymentinfo.payment,
         winproduct: paymentinfo?.products?.winproduct,
         shippingInfo: paymentinfo?.shippingInfo,
-        shippingPriceset: paymentinfo.products.shippings,
+        shippingPriceset: paymentinfo.products.shipping,
         bill: paymentinfo?.bill,
         status: "pending"
       });
@@ -1476,8 +1482,6 @@ async function run() {
         { $set: { koyel: product.koyel, winners: updatedWinnersArray } }
       );
       res.json({ payment, message: "Payment details updated successfully" });
-
-      
     });
 
     /// get my koyel item  payment
@@ -1501,7 +1505,7 @@ async function run() {
     ///get  koyel item payment request payment
     app.get("/product/koyel-item/payment/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { productID: id };
+      const query = { productId: id };
       const result = await koyelitempaymentColletion.find(query).toArray();
       res.send(result);
     });
@@ -1512,14 +1516,18 @@ async function run() {
       async (req, res) => {
         const productId = req.params.productId;
         const bidderId = req.params.bidderId;
+
+        console.log(productId, "and ", bidderId);
+
         const { itemId } = req.body;
         const payment = await koyelitempaymentColletion.findOne(
           {
-            productID: productId,
+            productId: productId,
             bidderId: bidderId
           },
           { sort: { _id: -1 } }
         );
+
         await koyelitempaymentColletion.updateOne(
           { _id: payment?._id },
           { $set: { status: "approve" } }
@@ -1545,29 +1553,48 @@ async function run() {
           koyelItem.status = "sold-out";
         }
 
-        await koyelCollection.updateOne(
-          { _id: new ObjectId(productId) },
-          { $set: { koyel: product.koyel } }
-        );
+     const updatedWinnersArray = product.winners.map(item => {
+       if (item.bidderId === bidderId) {
+         return { ...item, status: "approve" }; // This should set status to "approve"
+       }
+       return item;
+     });
 
-        res.send({ message: "product  updated successfully" });
+
+        console.log("Updated Winners Array:", updatedWinnersArray);
+
+       try {
+         // Update the product document in MongoDB
+         await koyelCollection.updateOne(
+           { _id: new ObjectId(productId) },
+           { $set: { koyel: product.koyel, winners: updatedWinnersArray } }
+         );
+         console.log("Product updated successfully.");
+       } catch (error) {
+         console.error("Error updating product:", error);
+       }
+        console.log("Product updated successfully.");
+
+        res.send({ message: "Product updated successfully" });
       }
     );
 
-    ///fiald payment koyel ite,
+    //payment fiald
     app.put(
       "/product/:productId/koyel-item/payment/Failed/:bidderId",
       async (req, res) => {
         const productId = req.params.productId;
         const bidderId = req.params.bidderId;
+
         const { itemId } = req.body;
         const payment = await koyelitempaymentColletion.findOne(
           {
-            productID: productId,
+            productId: productId,
             bidderId: bidderId
           },
           { sort: { _id: -1 } }
         );
+
         await koyelitempaymentColletion.updateOne(
           { _id: payment?._id },
           { $set: { status: "" } }
@@ -1590,19 +1617,27 @@ async function run() {
           }
 
           koyelItem.payment = "";
-          koyelItem.status = "s";
+          koyelItem.status = "";
         }
 
+        const updatedWinnersArray = product.winners.map(item => {
+          if (
+            item.bidderId === bidderId
+          ) {
+            return { ...item, status: "" };
+          }
+          return item;
+        });
+
+        // Update the product document in MongoDB
         await koyelCollection.updateOne(
           { _id: new ObjectId(productId) },
-          { $set: { koyel: product.koyel } }
+          { $set: { koyel: product.koyel, winners: updatedWinnersArray } }
         );
-
         res.send({ message: "product  updated successfully" });
       }
     );
 
-    /// get my    koyel  item buy product
     /// get my koyel item  payment
     app.get("/product/koyel-item/:bidderId/order", async (req, res) => {
       const productId = req.params.productId;
@@ -1676,8 +1711,6 @@ async function run() {
             EL: item?.koyel.EL
           };
 
-          console.log(paymentDetails);
-
           koyelItem.payment = "approve";
           koyelItem.status = "sold-out";
           koyelItem.winner = winner;
@@ -1708,7 +1741,7 @@ async function run() {
         );
         await koyelitempaymentColletion.updateOne(
           { _id: payment?._id },
-          { $set: { status: "approve" } }
+          { $set: { status: "" } }
         );
 
         const product = await koyelCollection.findOne({
@@ -1744,9 +1777,9 @@ async function run() {
     app.get("/products/approved/:productId", async (req, res) => {
       const productId = req.params.productId;
       const approvedProducts = await koyelitempaymentColletion
-        .find({ productID: productId, status: "approve" })
+        .find({ productId: productId, status: "approve" })
         .toArray();
-      console.log(approvedProducts);
+
       res.json(approvedProducts);
     });
 
