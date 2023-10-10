@@ -119,9 +119,8 @@ async function run() {
           // Insert user data into the "users" collection
           const result = await userCollection.insertOne(user);
 
-          res.status(200).json({message: "Registration successful" });
+          res.status(200).json({ message: "Registration successful" });
         } catch (err) {
-         
           res.status(500).json({ message: "Registration failed" });
         }
       }
@@ -138,7 +137,6 @@ async function run() {
         }
         res.status(200).json({ message: "Login successful" });
       } catch (err) {
-   
         res.status(500).json({ message: "Login failed" });
       }
     });
@@ -147,9 +145,9 @@ async function run() {
 
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
- 
+
       const info = req.body;
- 
+
       const filter = { email: email };
       const options = { upsert: true };
       const updateDoc = {
@@ -214,9 +212,18 @@ async function run() {
 
     app.put("/user/bidder/:id", async (req, res) => {
       const id = req.params.id;
-      const { phoneNumber, businessName, businessAddress, tinNum, tradeLN,tradeLNImg, ircnumber, ircimg ,nidImageUrl} =
-        req.body;
-  
+      const {
+        phoneNumber,
+        businessName,
+        businessAddress,
+        tinNum,
+        tradeLN,
+        tradeLNImg,
+        ircnumber,
+        ircimg,
+        nidImageUrl
+      } = req.body;
+
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const uptadeDoc = {
@@ -235,7 +242,7 @@ async function run() {
       };
 
       const result = await userCollection.updateOne(filter, uptadeDoc, options);
-      console.log(result)
+      console.log(result);
       res.send(result);
     });
 
@@ -278,7 +285,7 @@ async function run() {
       const options = { upsert: true };
 
       const result = await userCollection.updateOne(filter, uptadeDoc, options);
-   
+
       res.send(result);
     });
 
@@ -294,7 +301,6 @@ async function run() {
         return res.status(403).send({ message: "already send request" });
       }
 
-    
       const result = await hostRequestsCollection.insertOne({
         info,
         email,
@@ -311,7 +317,6 @@ async function run() {
 
     //appove  admin my seller request
     app.put("/admin/sellerRequests/approve/:email", async (req, res) => {
-    
       const email = req.params.email;
       const filter = { email: email };
       const options = { upsert: true };
@@ -326,7 +331,6 @@ async function run() {
         { $set: { role: "seller" } },
         err => {
           if (err) {
-   
             return res
               .status(500)
               .json({ error: "Failed to approve host request." });
@@ -347,14 +351,12 @@ async function run() {
     app.delete("/deleteseller/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
- 
 
       userCollection.updateOne(
         { email: email },
         { $set: { role: "" } },
         err => {
           if (err) {
-           
             return res
               .status(500)
               .json({ error: "Failed to approve host request." });
@@ -391,529 +393,6 @@ async function run() {
       res.send(user);
     });
 
-    // ///upload   product
-    // app.post("/products", async (req, res) => {
-    //   try {
-    //     const product = req.body;
-
-    //     // Insert the product into the product collection
-    //     await productCollection.insertOne(product);
-
-    //     // Send success message
-    //     res.status(200).json({ message: "Product  upload  successfully" });
-    //   } catch (error) {
-    //     // Send error message
-    //     res.status(500).json({ message: "  product not  upload " });
-    //   }
-    // });
-
-    // // get all  product
-    // app.get("/products", async (req, res) => {
-    //   const result = await productCollection.find({}).toArray();
-    //   res.send(result);
-    // });
-
-    // ///admin  uptade a product
-
-    // app.put("/product/update/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const {
-    //     name,
-    //     description,
-    //     startBiddingPrice,
-    //     buyNowPrice,
-    //     minimumBid,
-    //     startBiddingTime,
-    //     endBiddingTime
-    //   } = req.body;
-    //   const filter = { _id: new ObjectId(id) };
-    //   const options = { upsert: true };
-    //   const updateDoc = {
-    //     $set: {
-    //       name,
-    //       description,
-    //       startBiddingPrice,
-    //       buyNowPrice,
-    //       minimumBid,
-    //       startBiddingTime,
-    //       endBiddingTime
-    //     }
-    //   };
-
-    //   const result = await productCollection.updateOne(
-    //     filter,
-    //     updateDoc,
-    //     options
-    //   );
-
-    //   res.json({ result, message: "product updated successfully" });
-    // });
-
-    // // admin delete  product
-
-    // app.delete("/products/admin/delete/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const query = { _id: new ObjectId(id) };
-    //   const result = await productCollection.deleteOne(query);
-    //   res.json({ result, message: "  deleted product successfully" });
-    // });
-
-    // // all products get  bidding end
-
-    // app.get("/products/closed-bids/with-bids", async (req, res) => {
-    //   try {
-    //     const currentDate = new Date();
-    //     const year = currentDate.getFullYear();
-    //     const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-    //     const day = String(currentDate.getDate()).padStart(2, "0");
-    //     const hours = String(currentDate.getHours()).padStart(2, "0");
-    //     const minutes = String(currentDate.getMinutes()).padStart(2, "0");
-
-    //     const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-    //     const products = await productCollection
-    //       .find({
-    //         endBiddingTime: { $lt: formattedDate }
-    //       })
-    //       .toArray();
-
-    //     const result = products.filter(
-    //       product => product.bids.length !== 0 || product.bids.length > 0
-    //     );
-    //     res.send(result);
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving products" });
-    //   }
-    // });
-
-    // //end bidding with out bid
-    // app.get("/products/no-bids-end-time", async (req, res) => {
-    //   try {
-    //     const currentDate = new Date();
-    //     const year = currentDate.getFullYear();
-    //     const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-    //     const day = String(currentDate.getDate()).padStart(2, "0");
-    //     const hours = String(currentDate.getHours()).padStart(2, "0");
-    //     const minutes = String(currentDate.getMinutes()).padStart(2, "0");
-
-    //     const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-    //     // Find all products where the bids array does not exist or is empty,
-    //     // and the endBiddingTime is less than or equal to the current date
-    //     const products = await productCollection
-    //       .find({
-    //         $or: [{ bids: { $exists: false } }, { bids: { $size: 0 } }]
-    //       })
-    //       .toArray();
-    //     const result = products.filter(
-    //       product => product.endBiddingTime < formattedDate
-    //     );
-
-    //     res.send(result);
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving products" });
-    //   }
-    // });
-
-    // ////today  end bidding
-    // app.get("/products/bidding-end-today", async (req, res) => {
-    //   try {
-    //     // Retrieve the current date/time
-    //     const currentDate = new Date();
-    //     const today = currentDate.toISOString().slice(0, 16);
-
-    //     // Calculate the end date/time for 24 hours from now
-    //     const futureDate = new Date(
-    //       currentDate.getTime() + 24 * 60 * 60 * 1000
-    //     );
-    //     const formattedDate = futureDate.toISOString().slice(0, 16);
-
-    //     console.log(formattedDate);
-
-    //     // Find products with bidding ending within the next 24 hours
-    //     const filteredProducts = await productCollection
-    //       .find({
-    //         endBiddingTime: { $gt: today, $lt: formattedDate }
-    //       })
-    //       .toArray();
-
-    //     res.send(filteredProducts);
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving products" });
-    //   }
-    // });
-
-    // app.get("/products/bidding-end-less-than-24-hours", async (req, res) => {
-    //   try {
-    //     // Retrieve the current date/time
-    //     const currentDate = new Date();
-
-    //     // Calculate the end date/time for 24 hours from now
-    //     const futureDate = new Date(
-    //       currentDate.getTime() + 24 * 60 * 60 * 1000
-    //     );
-    //     console.log(futureDate);
-
-    //     // Find products with endBiddingTime less than 24 hours from now
-    //     const filteredProducts = await productCollection
-    //       .find({
-    //         endBiddingTime: { $lt: futureDate }
-    //       })
-    //       .toArray();
-
-    //     res.send(filteredProducts);
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving products" });
-    //   }
-    // });
-
-    // ///place bid
-    // app.post("/products/:productId/bids", async (req, res) => {
-    //   try {
-    //     const { productId } = req.params;
-    //     const {
-    //       bidAmount,
-    //       bidderName,
-    //       bidderId,
-    //       bidderEmail,
-    //       bidderNumber,
-    //       bidderPhoto,
-    //       productName,
-    //       productPhoto
-    //     } = req.body;
-
-    //     // Find the product by its ID in the database
-    //     const product = await productCollection.findOne({
-    //       _id: new ObjectId(productId)
-    //     });
-
-    //     if (!product) {
-    //       return res.status(404).json({ error: "Product not found" });
-    //     }
-
-    //     // Check if bidding is still open
-    //     const currentTime = new Date().getTime();
-    //     const biddingEndTime = new Date(product.endBiddingTime).getTime();
-    //     if (currentTime > biddingEndTime) {
-    //       return res.status(400).json({ error: "Bidding has ended" });
-    //     } else if (product.status === "sold-out") {
-    //       return res.status(400).json({ error: "product sold-out " });
-    //     }
-
-    //     // Check if bid amount is greater than the current highest bid
-    //     const currentHighestBid = product.bids.reduce(
-    //       (maxBid, bid) => (bid.amount > maxBid ? bid.amount : maxBid),
-    //       0
-    //     );
-
-    //     // Calculate the minimum bid amount
-    //     const minimumBid = parseFloat(product.minimumBid);
-    //     console.log(currentHighestBid + minimumBid);
-
-    //     // Check if new bid amount is lower than current bid price plus minimum bid
-    //     if (bidAmount < currentHighestBid + minimumBid) {
-    //       return res.status(400).json({
-    //         error:
-    //           "New price cannot be lower than the current bid price plus the minimum bid amount."
-    //       });
-    //     }
-
-    //     // Update the product with the new bid
-    //     const newBid = {
-    //       amount: bidAmount,
-    //       bidderName: bidderName,
-    //       bidderId: bidderId,
-    //       bidderEmail,
-    //       bidderNumber,
-    //       bidderPhoto,
-    //       productName,
-    //       productPhoto,
-    //       timestamp: new Date().toISOString()
-    //     };
-
-    //     product.bids.push(newBid);
-
-    //     await productCollection.updateOne(
-    //       { _id: new ObjectId(productId) },
-    //       { $set: product }
-    //     );
-
-    //     res
-    //       .status(201)
-    //       .json({ message: "Bid placed successfully", bid: newBid });
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error placing bid" });
-    //   }
-    // });
-
-    // //get winner
-    // app.get("/products/:productId/winner", async (req, res) => {
-    //   try {
-    //     const { productId } = req.params;
-
-    //     // Find the product by its ID in the database
-    //     const product = await productCollection.findOne({
-    //       _id: new ObjectId(productId)
-    //     });
-
-    //     if (!product) {
-    //       return res.status(404).json({ error: "Product not found" });
-    //     }
-
-    //     // Check if any bids exist for the product
-    //     if (product.bids.length === 0) {
-    //       return res
-    //         .status(400)
-    //         .json({ error: "No bids found for the product" });
-    //     }
-    //     // Find the bid with the highest amount
-    //     const highestBid = product.bids.reduce((maxBid, bid) =>
-    //       bid.amount > maxBid.amount ? bid : maxBid
-    //     );
-
-    //     // Check if the current time is greater than the bidding end time
-    //     const currentTime = new Date().getTime();
-    //     const biddingEndTime = new Date(product.endBiddingTime).getTime();
-
-    //     if (currentTime >= biddingEndTime) {
-    //       // Bidding has ended, select the winner if not already selected
-    //       if (!product.winner) {
-    //         const winner = highestBid;
-
-    //         // Set the winner in the product document
-    //         await productCollection.updateOne(
-    //           { _id: new ObjectId(productId) },
-    //           { $set: { winner, status: "pending" } }
-    //         );
-
-    //         // Send email to the winner
-    //         const mailOptions = {
-    //           from: "mdmahmudulla474@gmail.com",
-    //           to: winner.bidderEmail,
-    //           subject: "Congratulations! You won the bid!",
-    //           text: "Dear winner, congratulations on winning the bid. Please proceed with the payment process."
-    //         };
-
-    //         transporter.sendMail(mailOptions, (error, info) => {
-    //           if (error) {
-    //             console.error("Error sending email:", error);
-    //           } else {
-    //             console.log("Email sent:", info.response);
-    //           }
-    //         });
-
-    //         return res.status(200).json({
-    //           message: "Bidding has ended. Winner selected and email sent."
-    //         });
-    //       }
-
-    //       return res
-    //         .status(200)
-    //         .json({ message: "Bidding has ended. Winner already selected." });
-    //     }
-
-    //     res.status(200).json({ message: "Bidding is still ongoing" });
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving winner" });
-    //   }
-    // });
-
-    // //get my all bids
-
-    // ///get my bidd
-    // app.get("/bids/bidder/:bidderId/products", async (req, res) => {
-    //   try {
-    //     const { bidderId } = req.params;
-
-    //     // Find all products that have bids from the bidder
-    //     const products = await productCollection
-    //       .find({
-    //         "bids.bidderId": bidderId
-    //       })
-    //       .toArray();
-
-    //     res.status(200).json({ products });
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving bidder's products" });
-    //   }
-    // });
-
-    // ///get my  win bids
-    // app.get("/my-wins", async (req, res) => {
-    //   try {
-    //     const userEmail = req.query.email; // Get the user's email from the query parameter
-
-    //     // Find all products where the user is the winner
-    //     const winningProducts = await productCollection
-    //       .find({
-    //         "winner.bidderEmail": userEmail
-    //       })
-    //       .toArray();
-
-    //     res.send(winningProducts);
-    //   } catch (error) {
-    //     res.status(500).json({ error: "Error retrieving winning products" });
-    //   }
-    // });
-    // ///get all winner
-    // app.get("/products/winners", async (req, res) => {
-    //   const winners = await productCollection
-    //     .find({ winner: { $exists: true } })
-    //     .project({ _id: 0, winner: 1 })
-    //     .toArray();
-    //   res.json(winners.map(({ winner }) => winner));
-    // });
-    // /// admin order  order
-    // app.get("/orders", async (req, res) => {
-    //   const query = { order: "order" };
-    //   const result = await paymentColletion.find(query).toArray();
-    //   res.send(result);
-    // });
-    // //approve order
-    // app.put("/payment/admin/order/approve/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const winner = req.body;
-
-    //   console.log(id, "this is id from me an my site ");
-    //   console.log(winner);
-    //   const filter = { _id: new ObjectId(id) };
-    //   const updateDoc = {
-    //     $set: {
-    //       status: "approved"
-    //     }
-    //   };
-
-    //   const result = await paymentColletion.updateOne(filter, updateDoc);
-
-    //   const currentDate = new Date();
-    //   const year = currentDate.getFullYear();
-    //   const month = String(currentDate.getMonth() + 1).padStart(2, "0");
-    //   const day = String(currentDate.getDate()).padStart(2, "0");
-    //   const hours = String(currentDate.getHours()).padStart(2, "0");
-    //   const minutes = String(currentDate.getMinutes()).padStart(2, "0");
-
-    //   const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
-
-    //   productCollection.updateOne(
-    //     { _id: new ObjectId(winner?.productId) },
-    //     {
-    //       $set: {
-    //         winner,
-    //         endBiddingTime: formattedDate,
-    //         payment: "approved",
-    //         status: "sold-out"
-    //       }
-    //     }
-    //   );
-    //   res.send(result);
-    // });
-    // /// payment
-    // //send payment dettails
-    // app.post("/payments/details/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const details = req.body;
-    //   const result = await paymentColletion.insertOne(details);
-
-    //   productCollection.updateOne(
-    //     { _id: new ObjectId(id) },
-    //     {
-    //       $set: {
-    //         payment: "pending"
-    //       }
-    //     }
-    //   );
-
-    //   res.send(result);
-    // });
-    // //admin  aprove  payment
-    // app.put("/payment/admin/approve/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const paymentId = req.body;
-    //   const filter = { _id: new ObjectId(paymentId) };
-    //   const updateDoc = {
-    //     $set: {
-    //       status: "approved"
-    //     }
-    //   };
-
-    //   const result = await paymentColletion.updateOne(filter, updateDoc);
-    //   productCollection.updateOne(
-    //     { _id: new ObjectId(id) },
-    //     {
-    //       $set: {
-    //         payment: "approved",
-    //         status: "sold out"
-    //       }
-    //     }
-    //   );
-    //   res.send(result);
-    // });
-    // ///handle fild   payment
-    // app.put("/payment/admin/failed/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const paymentId = req.body;
-    //   console.log(paymentId);
-    //   const filter = { _id: new ObjectId(paymentId) };
-    //   const updateDoc = {
-    //     $set: {
-    //       status: "failed"
-    //     }
-    //   };
-
-    //   const result = await paymentColletion.updateOne(filter, updateDoc);
-    //   productCollection.updateOne(
-    //     { _id: new ObjectId(id) },
-    //     {
-    //       $set: {
-    //         payment: ""
-    //       }
-    //     }
-    //   );
-    //   res.send(result);
-    // });
-    // //get all   payment
-    // app.get("/payments", async (req, res) => {
-    //   const result = await paymentColletion.find({}).toArray();
-    //   const payments = result.filter(payment => payment.status === "approved");
-    //   res.send(payments);
-    // });
-    // ///get singel payment
-    // app.get("/product/payment/:id", async (req, res) => {
-    //   const id = req.params.id;
-    //   const query = { productId: id };
-    //   const result = await paymentColletion.findOne(query, {
-    //     sort: { _id: -1 }
-    //   });
-    //   res.send(result);
-    // });
-    // ////get my  order
-    // app.get("/my-orders", async (req, res) => {
-    //   const email = req.query.email;
-    //   const result = await paymentColletion.find({}).toArray();
-
-    //   const orders = result.filter(
-    //     order => order.order === "order" && order?.bidderEmail === email
-    //   );
-    //   res.send(orders);
-    // });
-    /*koyel item start here 
-// new ver
-
-///
-/
-/
-///
-/
-/
-/
-/
-/
-/
-/
-/
-/
-*/
-
     /// koyel   product start here
 
     ///upload   product koyel
@@ -936,9 +415,27 @@ async function run() {
     app.delete("/product/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
-      const result = await koyelCollection.deleteOne(query);
-      res.json({ result, message: "  deleted product successfully" });
+
+      try {
+        // Find and delete the associated payment
+        const payment = await paymentColletion.findOneAndDelete({
+          productId: id
+        });
+
+        // Delete the product
+        const result = await koyelCollection.deleteOne(query);
+console.log(result, payment);
+        res.json({
+          result,
+          payment,
+          message: "Deleted product and payment successfully"
+        });
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({ error: "An error occurred while deleting" });
+      }
     });
+
 
     //get all  koyel product by category name
 
@@ -1084,7 +581,6 @@ async function run() {
         const bids = products.flatMap(product =>
           product?.bids?.filter(bid => bid.bidderId === bidderId)
         ); // Flatten the array
-       
 
         res.json({ bids: bids });
       } catch (error) {
@@ -1149,7 +645,7 @@ async function run() {
         }
 
         const filteredData = {};
-        
+
         // Restructure the data
         initialWinner.forEach(item => {
           const {
@@ -1520,8 +1016,6 @@ async function run() {
         const productId = req.params.productId;
         const bidderId = req.params.bidderId;
 
- 
-
         const { itemId } = req.body;
         const payment = await koyelitempaymentColletion.findOne(
           {
@@ -1545,7 +1039,7 @@ async function run() {
           const { koyelId } = item;
 
           const koyelItem = product.koyel.find(item => item._id === koyelId);
-         
+
           if (!koyelItem) {
             return res
               .status(404)
@@ -1556,26 +1050,22 @@ async function run() {
           koyelItem.status = "sold-out";
         }
 
-     const updatedWinnersArray = product.winners.map(item => {
-       if (item.bidderId === bidderId) {
-         return { ...item, status: "approve" }; // This should set status to "approve"
-       }
-       return item;
-     });
+        const updatedWinnersArray = product.winners.map(item => {
+          if (item.bidderId === bidderId) {
+            return { ...item, status: "approve" }; // This should set status to "approve"
+          }
+          return item;
+        });
 
-
-     
-
-       try {
-         // Update the product document in MongoDB
-         await koyelCollection.updateOne(
-           { _id: new ObjectId(productId) },
-           { $set: { koyel: product.koyel, winners: updatedWinnersArray } }
-         ); 
-       } catch (error) {
-         console.error("Error updating product:", error);
-       }
-       
+        try {
+          // Update the product document in MongoDB
+          await koyelCollection.updateOne(
+            { _id: new ObjectId(productId) },
+            { $set: { koyel: product.koyel, winners: updatedWinnersArray } }
+          );
+        } catch (error) {
+          console.error("Error updating product:", error);
+        }
 
         res.send({ message: "Product updated successfully" });
       }
@@ -1611,7 +1101,7 @@ async function run() {
           const { koyelId } = item;
 
           const koyelItem = product.koyel.find(item => item._id === koyelId);
-          
+
           if (!koyelItem) {
             return res
               .status(404)
@@ -1623,9 +1113,7 @@ async function run() {
         }
 
         const updatedWinnersArray = product.winners.map(item => {
-          if (
-            item.bidderId === bidderId
-          ) {
+          if (item.bidderId === bidderId) {
             return { ...item, status: "" };
           }
           return item;
@@ -1640,7 +1128,7 @@ async function run() {
       }
     );
 
-    /// get my koyel item  payment order api 
+    /// get my koyel item  payment order api
     app.get("/product/koyel-item/:bidderId/order", async (req, res) => {
       const productId = req.params.productId;
       const bidderId = req.params.bidderId;
@@ -1755,7 +1243,7 @@ async function run() {
           const { koyelId } = item;
 
           const koyelItem = product.koyel.find(item => item._id === koyelId);
-   
+
           if (!koyelItem) {
             return res
               .status(404)
@@ -1785,34 +1273,31 @@ async function run() {
       res.json(approvedProducts);
     });
 
-    ///this koyel item post    order 
+    ///this koyel item post    order
 
     app.post("/product/koyel-item/order/:id", async (req, res) => {
       const productId = req.params.id;
-      const  paymentinfo = req.body.paymentDetails;
-       const {products, shippingInfo,payment,items , bill }=paymentinfo
-    
+      const paymentinfo = req.body.paymentDetails;
+      const { products, shippingInfo, payment, items, bill } = paymentinfo;
 
-    //   // // Find the product by ID
-    const product = await koyelCollection.findOne({
-      _id: new ObjectId(productId)
-    });
+      //   // // Find the product by ID
+      const product = await koyelCollection.findOne({
+        _id: new ObjectId(productId)
+      });
 
-    if (!product) {
-      return res.status(404).json({ error: "Product not found" });
-    }
+      if (!product) {
+        return res.status(404).json({ error: "Product not found" });
+      }
 
-    const bdTime = DateTime.now().setZone("Asia/Dhaka");
-    const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
-
-    
+      const bdTime = DateTime.now().setZone("Asia/Dhaka");
+      const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
 
       // ///post  order
       const paymentDetails = {
         productId: productId,
         productPhoto: products?.productPhoto,
         productName: products?.productName,
-         totalWeight: bill?.totalWeight,
+        totalWeight: bill?.totalWeight,
         total: bill?.SubTotal,
         averagePerKgPrice: bill?.perkg,
         bidderId: paymentinfo?.bidderId,
@@ -1821,21 +1306,19 @@ async function run() {
         bidderName: paymentinfo?.bidderName,
         bidderPhoto: paymentinfo?.bidderPhoto,
         paymentDetails: payment,
-        winproduct: items ,
+        winproduct: items,
         shippingInfo: shippingInfo,
         shippingPriceset: products?.ShippingCost,
-        bill:bill,
+        bill: bill,
         status: "pending",
         order: "order"
       };
       await koyelitempaymentColletion.insertOne(paymentDetails);
 
-
-
-            try {
-         return res.json({
-           message: "Order Place succefull successfully"
-         });
+      try {
+        return res.json({
+          message: "Order Place succefull successfully"
+        });
       } catch (error) {
         console.error("Error placing bids:", error);
         return res.status(500).json({ error: "Internal Server Error" });
@@ -1858,7 +1341,6 @@ async function run() {
       res.send(history);
     });
     ///get inteck product payment history
-     
   } finally {
     // Ensures that the client will close when you finish/error
   }
