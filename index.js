@@ -1783,45 +1783,56 @@ async function run() {
       res.json(approvedProducts);
     });
 
-    /////post  koyel item  a order
+    ///this koyel item post    order 
 
     app.post("/product/koyel-item/order/:id", async (req, res) => {
       const productId = req.params.id;
-      const { paymentDetails, items } = req.body;
 
-      const {
-        transaction,
-        bankSleep,
-        amount,
-        branch,
-        bank,
-        bidderName,
-        bidderId,
-        bidderEmail,
-        bidderNumber,
-        bidderPhoto
-      } = paymentDetails;
 
-      ///post  order
-      const payment = {
-        paymentDetails,
-        productID: productId,
-        bidderId: paymentDetails?.bidderId,
-        koyel: items,
+
+      const  paymentinfo = req.body;
+      const {products, shippingInfo,payment,items , bill }=paymentinfo
+    
+
+    //   // // Find the product by ID
+    const product = await koyelCollection.findOne({
+      _id: new ObjectId(productId)
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const bdTime = DateTime.now().setZone("Asia/Dhaka");
+    const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
+
+   if(product.endBiddingTime>formattedDate){
+   return res.send("bidding time end ")}
+
+      // ///post  order
+      const paymentDetails = {
+        productId: productId,
+        productPhoto: products?.productPhoto,
+        productName: products?.productName,
+         totalWeight: bill?.totalWeight,
+        total: bill?.SubTotal,
+        averagePerKgPrice: bill?.perkg,
+        bidderId: paymentinfo?.bidderId,
+        bidderNumber: paymentinfo?.bidderNumber,
+        bidderEmail: paymentinfo?.bidderEmail,
+        bidderName: paymentinfo?.bidderName,
+        bidderPhoto: paymentinfo?.bidderPhoto,
+        paymentDetails: payment,
+        winproduct: items ,
+        shippingInfo: shippingInfo,
+        shippingPriceset: products?.ShippingCost,
+        bill:bill,
         status: "pending",
         order: "order"
       };
-      await koyelitempaymentColletion.insertOne(payment);
+      await koyelitempaymentColletion.insertOne(paymentDetails);
 
       try {
-        //   // // Find the product by ID
-        const product = await koyelCollection.findOne({
-          _id: new ObjectId(productId)
-        });
-
-        if (!product) {
-          return res.status(404).json({ error: "Product not found" });
-        }
         // Iterate through each koyel bid data
         items.forEach(async koyelBid => {
           const { koyelId, koyel } = koyelBid;
