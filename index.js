@@ -119,9 +119,9 @@ async function run() {
           // Insert user data into the "users" collection
           const result = await userCollection.insertOne(user);
 
-          res.status(200).json({ message: "Registration successful" });
+          res.status(200).json({message: "Registration successful" });
         } catch (err) {
-          console.error(err);
+         
           res.status(500).json({ message: "Registration failed" });
         }
       }
@@ -138,7 +138,7 @@ async function run() {
         }
         res.status(200).json({ message: "Login successful" });
       } catch (err) {
-        console.error(err);
+   
         res.status(500).json({ message: "Login failed" });
       }
     });
@@ -147,10 +147,9 @@ async function run() {
 
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
-
-      console.log(email);
+ 
       const info = req.body;
-      console.log(info, "api is hittet ");
+ 
       const filter = { email: email };
       const options = { upsert: true };
       const updateDoc = {
@@ -215,9 +214,9 @@ async function run() {
 
     app.put("/user/bidder/:id", async (req, res) => {
       const id = req.params.id;
-      const { phoneNumber, businessName, businessAddress, tinNum, tradeLN } =
+      const { phoneNumber, businessName, businessAddress, tinNum, tradeLN,tradeLNImg, ircnumber, ircimg ,nidImageUrl} =
         req.body;
-      console.log(req.body);
+  
       const filter = { _id: new ObjectId(id) };
       const options = { upsert: true };
       const uptadeDoc = {
@@ -227,11 +226,16 @@ async function run() {
           businessName,
           businessAddress,
           tinNum,
-          tradeLN
+          tradeLN,
+          tradeLNImg,
+          ircnumber,
+          ircimg,
+          nidImageUrl
         }
       };
 
       const result = await userCollection.updateOne(filter, uptadeDoc, options);
+      console.log(result)
       res.send(result);
     });
 
@@ -274,7 +278,7 @@ async function run() {
       const options = { upsert: true };
 
       const result = await userCollection.updateOne(filter, uptadeDoc, options);
-      console.log(result);
+   
       res.send(result);
     });
 
@@ -290,8 +294,7 @@ async function run() {
         return res.status(403).send({ message: "already send request" });
       }
 
-      console.log(alreadeseller);
-
+    
       const result = await hostRequestsCollection.insertOne({
         info,
         email,
@@ -308,7 +311,7 @@ async function run() {
 
     //appove  admin my seller request
     app.put("/admin/sellerRequests/approve/:email", async (req, res) => {
-      console.log("api ius hit");
+    
       const email = req.params.email;
       const filter = { email: email };
       const options = { upsert: true };
@@ -323,7 +326,7 @@ async function run() {
         { $set: { role: "seller" } },
         err => {
           if (err) {
-            console.error("Failed to update user role:", err);
+   
             return res
               .status(500)
               .json({ error: "Failed to approve host request." });
@@ -344,14 +347,14 @@ async function run() {
     app.delete("/deleteseller/:email", async (req, res) => {
       const email = req.params.email;
       const query = { email: email };
-      console.log("api deE");
+ 
 
       userCollection.updateOne(
         { email: email },
         { $set: { role: "" } },
         err => {
           if (err) {
-            console.error("Failed to update user role:", err);
+           
             return res
               .status(500)
               .json({ error: "Failed to approve host request." });
@@ -1081,7 +1084,7 @@ async function run() {
         const bids = products.flatMap(product =>
           product?.bids?.filter(bid => bid.bidderId === bidderId)
         ); // Flatten the array
-        console.log(bids);
+       
 
         res.json({ bids: bids });
       } catch (error) {
@@ -1146,7 +1149,7 @@ async function run() {
         }
 
         const filteredData = {};
-        console.log(initialWinner);
+        
         // Restructure the data
         initialWinner.forEach(item => {
           const {
@@ -1517,7 +1520,7 @@ async function run() {
         const productId = req.params.productId;
         const bidderId = req.params.bidderId;
 
-        console.log(productId, "and ", bidderId);
+ 
 
         const { itemId } = req.body;
         const payment = await koyelitempaymentColletion.findOne(
@@ -1542,7 +1545,7 @@ async function run() {
           const { koyelId } = item;
 
           const koyelItem = product.koyel.find(item => item._id === koyelId);
-          console.log(koyelItem);
+         
           if (!koyelItem) {
             return res
               .status(404)
@@ -1561,19 +1564,18 @@ async function run() {
      });
 
 
-        console.log("Updated Winners Array:", updatedWinnersArray);
+     
 
        try {
          // Update the product document in MongoDB
          await koyelCollection.updateOne(
            { _id: new ObjectId(productId) },
            { $set: { koyel: product.koyel, winners: updatedWinnersArray } }
-         );
-         console.log("Product updated successfully.");
+         ); 
        } catch (error) {
          console.error("Error updating product:", error);
        }
-        console.log("Product updated successfully.");
+       
 
         res.send({ message: "Product updated successfully" });
       }
@@ -1609,7 +1611,7 @@ async function run() {
           const { koyelId } = item;
 
           const koyelItem = product.koyel.find(item => item._id === koyelId);
-          console.log(koyelItem);
+          
           if (!koyelItem) {
             return res
               .status(404)
@@ -1753,7 +1755,7 @@ async function run() {
           const { koyelId } = item;
 
           const koyelItem = product.koyel.find(item => item._id === koyelId);
-          console.log(koyelItem);
+   
           if (!koyelItem) {
             return res
               .status(404)
