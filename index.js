@@ -1638,7 +1638,7 @@ async function run() {
       }
     );
 
-    /// get my koyel item  payment
+    /// get my koyel item  payment order api 
     app.get("/product/koyel-item/:bidderId/order", async (req, res) => {
       const productId = req.params.productId;
       const bidderId = req.params.bidderId;
@@ -1787,11 +1787,8 @@ async function run() {
 
     app.post("/product/koyel-item/order/:id", async (req, res) => {
       const productId = req.params.id;
-
-
-
-      const  paymentinfo = req.body;
-      const {products, shippingInfo,payment,items , bill }=paymentinfo
+      const  paymentinfo = req.body.paymentDetails;
+       const {products, shippingInfo,payment,items , bill }=paymentinfo
     
 
     //   // // Find the product by ID
@@ -1806,8 +1803,7 @@ async function run() {
     const bdTime = DateTime.now().setZone("Asia/Dhaka");
     const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
 
-   if(product.endBiddingTime>formattedDate){
-   return res.send("bidding time end ")}
+    
 
       // ///post  order
       const paymentDetails = {
@@ -1832,49 +1828,12 @@ async function run() {
       };
       await koyelitempaymentColletion.insertOne(paymentDetails);
 
-      try {
-        // Iterate through each koyel bid data
-        items.forEach(async koyelBid => {
-          const { koyelId, koyel } = koyelBid;
-          // Find the koyel object by ID
-          const koyelitem = product.koyel.find(koyel => koyel._id === koyelId);
-          if (!koyelitem) {
-            return res
-              .status(404)
-              .json({ error: `Koyel object with ID ${koyelId} not found` });
-          }
 
-          // Create a new bid object
-          const newBid = {
-            bidAmount: items.length / amount,
-            bidderName,
-            bidderEmail,
-            bidderId,
-            bidderPhoto,
-            bidderNumber,
-            koyelId,
-            minimumBid: koyel?.minimumBid,
-            currentBid: koyel?.currentBid,
-            item: koyel?.item,
-            spec: koyel?.spec,
-            Thickness: koyel?.Thickness,
-            Width: koyel?.Width,
-            weight: koyel?.weight,
-            TS: koyel?.TS,
-            YP: koyel?.YP,
-            EL: koyel?.EL
-          };
-          // //Add the new bid to the koyel object's bids array
-          koyelitem.bids.push(newBid);
-        });
-        // Update the product in the database
-        await koyelCollection.updateOne(
-          { _id: new ObjectId(productId) },
-          { $set: product }
-        );
-        return res.json({
-          message: "Bids placed successfully"
-        });
+
+            try {
+         return res.json({
+           message: "Order Place succefull successfully"
+         });
       } catch (error) {
         console.error("Error placing bids:", error);
         return res.status(500).json({ error: "Internal Server Error" });
@@ -1882,7 +1841,6 @@ async function run() {
     });
 
     ///get all koil item order
-
     app.get("/product/koyel-item/order", async (req, res) => {
       const query = { order: "order" };
       const orders = await koyelitempaymentColletion.find(query).toArray();
@@ -1898,13 +1856,7 @@ async function run() {
       res.send(history);
     });
     ///get inteck product payment history
-    app.get("/my-payment-history/product/:id", async (req, res) => {
-      const bidderId = req.params.id;
-      const history = await paymentColletion
-        .find({ bidderId: bidderId })
-        .toArray();
-      res.send(history);
-    });
+     
   } finally {
     // Ensures that the client will close when you finish/error
   }
