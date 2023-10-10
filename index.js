@@ -1725,7 +1725,7 @@ async function run() {
       }
     );
 
-    ////koyuel item pament faild
+    ////koyuel item pament faild  succe
     app.put(
       "/product/:productId/koyel-item/payment/approve/:bidderId",
       async (req, res) => {
