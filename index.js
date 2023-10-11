@@ -66,6 +66,9 @@ async function run() {
   try {
     const userCollection = client.db("KB").collection("users");
     const koyelCollection = client.db("KB").collection("koyel");
+    const sellerkoyelCollection = client
+      .db("KB")
+      .collection("koyel-item-seller");
     const hostRequestsCollection = client.db("KB").collection("hostRequests");
     const koyelitempaymentColletion = client
       .db("KB")
@@ -382,6 +385,13 @@ async function run() {
       const user = await userCollection.findOne(query);
       res.send({ isAdmin: user?.role === "admin" });
     });
+    //perticuller  user  seller
+    app.get("/user/seller/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      res.send({ isSeller: user?.role === "seller" });
+    });
 
     ///get  singel user
     app.get("/user/:email", async (req, res) => {
@@ -404,11 +414,30 @@ async function run() {
       }
     });
 
-    //get all  koyel product
-    app.get("/products/items/v1", async (req, res) => {
-      const products = await koyelCollection.find({}).toArray();
+    //seller product   get seller upload product
+    app.get("/products/items/v1/:id", async (req, res) => {
+      const userid = req.params.id;
+      const products = await koyelCollection
+        .find({ authorId: userid })
+        .toArray();
       res.send(products);
     });
+
+    app.get("/seller/products/items/v1", async (req, res) => {
+      const products = await koyelCollection
+        .find({ status: "pending" })
+        .toArray();
+      res.send(products);
+    });
+
+    //get all  koyel product
+    app.get("/products/items/v1", async (req, res) => {
+      const products = await koyelCollection
+        .find({ status: "approve" })
+        .toArray();
+      res.send(products);
+    });
+
     ///dlete product   koyel item
     app.delete("/product/:id", async (req, res) => {
       const id = req.params.id;
@@ -441,20 +470,22 @@ async function run() {
 
     ///get cr
     app.get("/products/category/cr", async (req, res) => {
-      const result = await koyelCollection.find({ category: "CR" }).toArray();
+      const result = await koyelCollection
+        .find({ category: "CR", status: "approve" })
+        .toArray();
       res.send(result);
     });
 
     app.get("/products/category/ga", async (req, res) => {
       const result = await koyelCollection
-        .find({ category: "GI/GA" })
+        .find({ category: "GI/GA", status: "approve" })
         .toArray();
       res.send(result);
     });
 
     app.get("/products/category/po", async (req, res) => {
       const result = await koyelCollection
-        .find({ category: "PO/HR" })
+        .find({ category: "PO/HR", status: "approve" })
         .toArray();
       res.send(result);
     });
@@ -507,7 +538,8 @@ async function run() {
             businessAddress,
             productName,
             productID,
-            productPhoto
+            productPhoto,
+            shippingInfo
           } = koyelBid;
           // Find the koyel object by ID
           const koyelitem = product.koyel.find(koyel => koyel._id === koyelId);
@@ -531,6 +563,7 @@ async function run() {
             productID,
             productPhoto,
             koyelId,
+            shippingInfo,
             currentBid: bidAmount,
             item: koyel?.item,
             spec: koyel?.spec,
@@ -541,6 +574,7 @@ async function run() {
             YP: koyel?.YP,
             EL: koyel?.EL
           };
+          console.log(newBid?.currentBid);
 
           // Add the new bid to the koyel object's bids array
           koyelitem.bids.push(newBid);
@@ -794,12 +828,7 @@ async function run() {
         <hr/>
     </div>
  </div>
-
-
 </div>
-        
-        
-      
         `
           };
 
@@ -884,8 +913,6 @@ async function run() {
         res.status(500).json({ error: "Error retrieving products" });
       }
     });
-
-   
 
     //// koyel  item payment
     ///post koyel item   payment
