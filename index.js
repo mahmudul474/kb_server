@@ -65,10 +65,8 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     const userCollection = client.db("KB").collection("users");
-    const productCollection = client.db("KB").collection("products");
     const koyelCollection = client.db("KB").collection("koyel");
     const hostRequestsCollection = client.db("KB").collection("hostRequests");
-    const paymentColletion = client.db("KB").collection("payments");
     const koyelitempaymentColletion = client
       .db("KB")
       .collection("koyelitempayment");
@@ -411,20 +409,23 @@ async function run() {
       const products = await koyelCollection.find({}).toArray();
       res.send(products);
     });
-
+    ///dlete product   koyel item
     app.delete("/product/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
 
       try {
         // Find and delete the associated payment
-        const payment = await paymentColletion.findOneAndDelete({
+        const paymentoptions = {
           productId: id
-        });
+        };
+        const payment = await koyelitempaymentColletion.deleteMany(
+          paymentoptions
+        );
 
         // Delete the product
         const result = await koyelCollection.deleteOne(query);
-console.log(result, payment);
+        console.log(result, payment);
         res.json({
           result,
           payment,
@@ -435,7 +436,6 @@ console.log(result, payment);
         res.status(500).json({ error: "An error occurred while deleting" });
       }
     });
-
 
     //get all  koyel product by category name
 
@@ -457,14 +457,6 @@ console.log(result, payment);
         .find({ category: "PO/HR" })
         .toArray();
       res.send(result);
-    });
-
-    //     //// time testing
-    app.get("/time", async (req, res) => {
-      const bdTime = DateTime.now().setZone("Asia/Dhaka");
-      const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
-
-      res.send(bdTime);
     });
 
     ///get singel koyel item
@@ -852,7 +844,7 @@ console.log(result, payment);
       }
     });
 
-    ///bid close  dth  bid
+    ///bid close  with  bid
 
     app.get("/products/koyel-item/closed-bids/with-bids", async (req, res) => {
       try {
@@ -872,6 +864,7 @@ console.log(result, payment);
         res.status(500).json({ error: "Error retrieving products" });
       }
     });
+
     ////bid close with no bid
     app.get("/products/koyel-item/closed-bids/no-bids", async (req, res) => {
       try {
@@ -884,7 +877,7 @@ console.log(result, payment);
           .toArray();
 
         const result = products.filter(
-          product => product.bids.length !== 0 || product.bids.length > 0
+          product => product.bids.length === 0 || product.bids.length === 0
         );
         res.send(result);
       } catch (error) {
@@ -892,28 +885,7 @@ console.log(result, payment);
       }
     });
 
-    ///get winner product img and  product name
-
-    app.get("/products/koyel-item/item/:id", async (req, res) => {
-      const productId = req.params.id;
-      const product = await koyelCollection.findOne({
-        _id: new ObjectId(productId)
-      });
-
-      if (product) {
-        const productName = product.name;
-        const productImg = product.mainImage;
-
-        const response = {
-          productName: productName,
-          productImg: productImg
-        };
-
-        res.json(response);
-      } else {
-        res.status(404).json({ error: "Product not found" });
-      }
-    });
+   
 
     //// koyel  item payment
     ///post koyel item   payment
@@ -1264,13 +1236,19 @@ console.log(result, payment);
     );
 
     ///get all approver payment in a single  product
-    app.get("/products/approved/:productId", async (req, res) => {
-      const productId = req.params.productId;
-      const approvedProducts = await koyelitempaymentColletion
-        .find({ productId: productId, status: "approve" })
-        .toArray();
+    app.get("/products/payment/approved", async (req, res) => {
+      try {
+        const approvedProducts = await koyelitempaymentColletion
+          .find({ status: "approve" })
+          .toArray();
 
-      res.json(approvedProducts);
+        res.json(approvedProducts);
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({
+          error: "An error occurred while fetching approved products"
+        });
+      }
     });
 
     ///this koyel item post    order
@@ -1279,7 +1257,6 @@ console.log(result, payment);
       const productId = req.params.id;
       const paymentinfo = req.body.paymentDetails;
       const { products, shippingInfo, payment, items, bill } = paymentinfo;
-
       //   // // Find the product by ID
       const product = await koyelCollection.findOne({
         _id: new ObjectId(productId)
@@ -1335,6 +1312,7 @@ console.log(result, payment);
     /////get my payment history
     app.get("/my-payment-history/koyelitempayment/:id", async (req, res) => {
       const bidderId = req.params.id;
+      console.log("api is hitter ", bidderId);
       const history = await koyelitempaymentColletion
         .find({ bidderId: bidderId })
         .toArray();
