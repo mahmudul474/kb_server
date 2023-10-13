@@ -415,7 +415,7 @@ async function run() {
     });
 
     //seller product   get seller upload product
-    app.get("/products/items/v1/:id", async (req, res) => {
+    app.get("/products/seller/items/v1/:id", async (req, res) => {
       const userid = req.params.id;
       const products = await koyelCollection
         .find({ authorId: userid })
@@ -423,11 +423,37 @@ async function run() {
       res.send(products);
     });
 
-    app.get("/seller/products/items/v1", async (req, res) => {
+    ///get all seller product  admin
+    app.get("/admin/seller/products/items/v1", async (req, res) => {
       const products = await koyelCollection
         .find({ status: "pending" })
         .toArray();
       res.send(products);
+    });
+    ///get  Apporve seller product  admin
+    app.put("/product/approve/:id", async (req, res) => {
+      const id = req.params.id;
+      const newStatus = "approve"; // The new status you want to set
+
+      try {
+        const result = await koyelCollection.updateOne(
+          { _id: new ObjectId(id) }, // Assuming you are using MongoDB and _id as the unique identifier
+          { $set: { status: newStatus } }
+        );
+
+        if (result.modifiedCount === 1) {
+          res
+            .status(200)
+            .json({ message: "Product status updated successfully." });
+        } else {
+          res
+            .status(404)
+            .json({ message: "Product not found or status not updated." });
+        }
+      } catch (error) {
+        console.error("Error updating product status:", error);
+        res.status(500).json({ message: "Internal server error" });
+      }
     });
 
     //get all  koyel product
@@ -685,6 +711,7 @@ async function run() {
             productName,
             productID,
             shipping,
+            shippingInfo,
             productPhoto
           } = item;
 
@@ -703,9 +730,12 @@ async function run() {
               productID,
               productPhoto,
               shipping,
+              shippingInfo,
               winproduct: [],
               total: 0,
               totalWeight: 0,
+              totalShippingCost: 0,
+              subTotal: 0,
               averagePerKgPrice: 0
             };
           }
@@ -724,9 +754,21 @@ async function run() {
             YP: item.YP,
             EL: item.EL
           });
+
           // Calculate the total for the bidder by accumulating the product of currentBid and weight
           filteredData[bidderEmail].total += item.currentBid * item.weight;
           filteredData[bidderEmail].totalWeight += item.weight;
+
+          // Calculate the total shipping cost for the bidder by accumulating the product of weight and shipping cost
+          filteredData[bidderEmail].totalShippingCost +=
+            item.weight * shippingInfo.shippingCost;
+
+          // Calculate the subTotal as the sum of total and totalShippingCost
+          filteredData[bidderEmail].subTotal =
+            filteredData[bidderEmail].total +
+            filteredData[bidderEmail].totalShippingCost;
+
+          // Calculate the averagePerKgPrice by dividing total by totalWeight
           filteredData[bidderEmail].averagePerKgPrice =
             filteredData[bidderEmail].total /
             filteredData[bidderEmail].totalWeight;
@@ -932,9 +974,12 @@ async function run() {
         productId: productID,
         productPhoto: paymentinfo.products?.productPhoto,
         productName: paymentinfo.products?.productName,
+
         totalWeight: paymentinfo.products?.totalWeight,
         total: paymentinfo.products?.total,
         averagePerKgPrice: paymentinfo.products?.averagePerKgPrice,
+        totalShippingCost: paymentinfo.products?.totalShippingCost,
+        subTotal: paymentinfo.products?.subTotal,
         bidderId: paymentinfo.products?.bidderId,
         bidderNumber: paymentinfo.products?.bidderNumber,
         bidderEmail: paymentinfo.products?.bidderEmail,
@@ -942,9 +987,7 @@ async function run() {
         bidderPhoto: paymentinfo.products?.bidderPhoto,
         paymentDetails: paymentinfo.payment,
         winproduct: paymentinfo?.products?.winproduct,
-        shippingInfo: paymentinfo?.shippingInfo,
-        shippingPriceset: paymentinfo.products.shipping,
-        bill: paymentinfo?.bill,
+        shippingInfo: paymentinfo?.products?.shippingInfo,
         status: "pending"
       });
 
@@ -1262,7 +1305,7 @@ async function run() {
       }
     );
 
-    ///get all approver payment in a single  product
+    ///get all approver payment
     app.get("/products/payment/approved", async (req, res) => {
       try {
         const approvedProducts = await koyelitempaymentColletion
@@ -1277,63 +1320,24 @@ async function run() {
         });
       }
     });
-
-    ///this koyel item post    order
-
-    app.post("/product/koyel-item/order/:id", async (req, res) => {
-      const productId = req.params.id;
-      const paymentinfo = req.body.paymentDetails;
-      const { products, shippingInfo, payment, items, bill } = paymentinfo;
-      //   // // Find the product by ID
-      const product = await koyelCollection.findOne({
-        _id: new ObjectId(productId)
-      });
-
-      if (!product) {
-        return res.status(404).json({ error: "Product not found" });
-      }
-
-      const bdTime = DateTime.now().setZone("Asia/Dhaka");
-      const formattedDate = bdTime.toFormat("yyyy-MM-dd'T'HH:mm");
-
-      // ///post  order
-      const paymentDetails = {
-        productId: productId,
-        productPhoto: products?.productPhoto,
-        productName: products?.productName,
-        totalWeight: bill?.totalWeight,
-        total: bill?.SubTotal,
-        averagePerKgPrice: bill?.perkg,
-        bidderId: paymentinfo?.bidderId,
-        bidderNumber: paymentinfo?.bidderNumber,
-        bidderEmail: paymentinfo?.bidderEmail,
-        bidderName: paymentinfo?.bidderName,
-        bidderPhoto: paymentinfo?.bidderPhoto,
-        paymentDetails: payment,
-        winproduct: items,
-        shippingInfo: shippingInfo,
-        shippingPriceset: products?.ShippingCost,
-        bill: bill,
-        status: "pending",
-        order: "order"
-      };
-      await koyelitempaymentColletion.insertOne(paymentDetails);
-
+    ///get all approver payment singel product 
+    app.get("/products/payment/approved/:id", async (req, res) => {
+      
+      const productId=req.params.id
+       
+      
       try {
-        return res.json({
-          message: "Order Place succefull successfully"
-        });
-      } catch (error) {
-        console.error("Error placing bids:", error);
-        return res.status(500).json({ error: "Internal Server Error" });
-      }
-    });
+        const approvedProducts = await koyelitempaymentColletion
+          .find({ productId: productId, status: "approve" })
+          .toArray();
 
-    ///get all koil item order
-    app.get("/product/koyel-item/order", async (req, res) => {
-      const query = { order: "order" };
-      const orders = await koyelitempaymentColletion.find(query).toArray();
-      res.send(orders);
+        res.json(approvedProducts);
+      } catch (error) {
+        console.error("Error:", error);
+        res.status(500).json({
+          error: "An error occurred while fetching approved products"
+        });
+      }
     });
 
     /////get my payment history
